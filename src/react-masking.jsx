@@ -786,6 +786,10 @@ class Mask extends React.Component {
     }
 }
 
+/**
+ * Set default prop types.
+ * @type {{children: *, mask: *, maskCharacter: *, formatCharacters: *, alwaysShowMask: *, i18n: *}}
+ */
 Mask.propTypes = {
     children: React.PropTypes.object,
     mask: React.PropTypes.string,
@@ -795,6 +799,10 @@ Mask.propTypes = {
     i18n: React.PropTypes.string
 };
 
+/**
+ * Default props for the component.
+ * @type {{maskCharacter: string, formatCharacters: {9: string, a: string, A: string, *: string}, alwaysShowMask: boolean}}
+ */
 Mask.defaultProps = {
     maskCharacter: "_",
     formatCharacters: {

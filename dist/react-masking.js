@@ -91,7 +91,7 @@
 
             _this.hasValue = _this.props.value != null;
 
-            var child = _react2.default.Children.only(_this.props.children);
+            var child = _this.child = _react2.default.Children.only(_this.props.children);
 
             var maskObj = _this.parseMask(_this.props.mask);
 
@@ -100,8 +100,8 @@
             _this.mask = maskObj.mask;
             _this.permanents = maskObj.permanents;
             _this.lastEditablePos = maskObj.lastEditablePos;
-
             _this.maskCharacter = _this.props.maskCharacter;
+            _this.lastCaretPosition = null;
 
             if (_this.mask && (_this.props.alwaysShowMask || value)) {
                 value = _this.formatValue(value);
@@ -119,8 +119,9 @@
             _this.onChange = _this.onChange.bind(_this);
             _this.onFocus = _this.onFocus.bind(_this);
 
-            _this.onKeyPress = _this.onKeyPress.bind(_this);
             _this.onKeyDown = _this.onKeyDown.bind(_this);
+            _this.onKeyPress = _this.onKeyPress.bind(_this);
+            _this.onKeyUp = _this.onKeyUp.bind(_this);
             return _this;
         }
 
@@ -141,25 +142,6 @@
                 input.value = value;
             }
         }, {
-            key: 'getInputDOMNode',
-            value: function getInputDOMNode() {
-                var input = this.input;
-
-                if (!input) {
-                    return null;
-                }
-
-                // React 0.14
-                if (Mask.isDOMElement(input)) {
-                    return input;
-                }
-                if (input.getDOMNode) {
-                    return input.getDOMNode();
-                } else {
-                    return _reactDom2.default.findDOMNode(input);
-                }
-            }
-        }, {
             key: 'setCaretToEnd',
             value: function setCaretToEnd() {
                 var filledLength = this.getFilledLength();
@@ -168,6 +150,21 @@
                 if (position !== null) {
                     this.setCaretPosition(position);
                 }
+            }
+        }, {
+            key: 'setCaretPosition',
+            value: function setCaretPosition(position) {
+                var raf = Mask.requestAnimationFrame();
+                var setPosition = this.setSelection.bind(this, position, 0);
+                setPosition();
+                raf(setPosition);
+
+                this.lastCaretPosition = position;
+            }
+        }, {
+            key: 'getCaretPosition',
+            value: function getCaretPosition() {
+                return this.getSelection().start;
             }
         }, {
             key: 'setSelection',
@@ -207,19 +204,6 @@
                 var length = end - start;
 
                 return { start: start, end: end, length: length };
-            }
-        }, {
-            key: 'setCaretPosition',
-            value: function setCaretPosition(pos) {
-                var raf = Mask.requestAnimationFrame();
-                var setPosition = this.setSelection.bind(this, pos, 0);
-                setPosition();
-                raf(setPosition);
-            }
-        }, {
-            key: 'getCaretPosition',
-            value: function getCaretPosition() {
-                return this.getSelection().start;
             }
         }, {
             key: 'getPrefix',
@@ -292,6 +276,41 @@
                 return ++i || this.getPrefix().length;
             }
         }, {
+            key: 'getRawSubstrLength',
+            value: function getRawSubstrLength(substr, position) {
+                var mask = this.mask;
+                var maskChar = this.maskChar;
+
+                substr = substr.split('');
+                for (var i = position; i < mask.length && substr.length;) {
+                    if (!this.isPermanentChar(i) || mask[i] === substr[0]) {
+                        var character = substr.shift();
+                        if (this.isAllowedChar(character, i, true)) {
+                            ++i;
+                        }
+                    } else {
+                        ++i;
+                    }
+                }
+                return i - position;
+            }
+        }, {
+            key: 'getInputValue',
+            value: function getInputValue() {
+                var input = this.input;
+                var valueDescriptor = this.valueDescriptor;
+                // TODO: implement Value descriptor.
+
+                var value = void 0;
+                if (valueDescriptor) {
+                    value = valueDescriptor.get.call(input);
+                } else {
+                    value = input.value;
+                }
+
+                return value;
+            }
+        }, {
             key: 'componentWillMount',
             value: function componentWillMount() {
                 var mask = this.mask;
@@ -328,7 +347,29 @@
             value: function onCut(e) {}
         }, {
             key: 'onPaste',
-            value: function onPaste(e) {}
+            value: function onPaste(e) {
+                if (this.isAndroidBrowser) {
+                    this.pasteSelection = this.getSelection();
+                    this.setInputValue('');
+                    return;
+                }
+
+                var text = void 0;
+
+                if (window.clipboardData && window.clipboardData.getData) {
+                    // IE
+                    text = window.clipboardData.getData('Text');
+                } else if (e.clipboardData && e.clipboardData.getData) {
+                    text = e.clipboardData.getData("text/plain");
+                }
+
+                if (text) {
+                    var value = this.state.value;
+                    var selection = this.getSelection();
+                    this.pasteText(value, text, selection, event);
+                }
+                e.preventDefault();
+            }
         }, {
             key: 'onKeyDown',
             value: function onKeyDown(e) {
@@ -364,7 +405,7 @@
 
                 if (value !== this.state.value) {
                     this.setInputValue(value);
-                    this.setState({ value: value });
+                    this.setState({ value: this.hasValue ? this.state.value : value });
                     preventDefault = true;
                 }
 
@@ -413,7 +454,10 @@
                 }
 
                 if (value !== this.state.value) {
-                    this.setState({ value: value });
+                    this.setInputValue(value);
+                    this.setState({
+                        value: this.hasValue ? this.state.value : value
+                    });
                 }
 
                 e.preventDefault();
@@ -424,8 +468,25 @@
                 this.setCaretPosition(caretPosition);
             }
         }, {
+            key: 'onKeyUp',
+            value: function onKeyUp(e) {
+                this.setState({ value: e.target.value });
+            }
+        }, {
             key: 'onBlur',
-            value: function onBlur(e) {}
+            value: function onBlur(e) {
+                if (!this.props.alwaysShowMask && this.isEmpty()) {
+                    var inputValue = '';
+                    var isInputValueChanged = inputValue !== this.getInputValue();
+                    if (isInputValueChanged) {
+                        this.setInputValue(inputValue);
+                    }
+
+                    this.setState({
+                        value: this.hasValue ? this.state.value : ""
+                    });
+                }
+            }
         }, {
             key: 'onChange',
             value: function onChange(e) {
@@ -493,6 +554,12 @@
                 }
 
                 value = this.formatValue(value);
+
+                this.setState({
+                    value: this.hasValue ? this.state.value : value
+                });
+
+                this.setCaretPosition(caretPosition);
             }
         }, {
             key: 'onFocus',
@@ -528,8 +595,8 @@
             }
         }, {
             key: 'isPermanentChar',
-            value: function isPermanentChar(i) {
-                return this.permanents.indexOf(i) !== -1;
+            value: function isPermanentChar(index) {
+                return this.permanents.indexOf(index) !== -1;
             }
         }, {
             key: 'isFilled',
@@ -539,9 +606,20 @@
                 return this.getFilledLength(value) === this.mask.length;
             }
         }, {
+            key: 'isEmpty',
+            value: function isEmpty() {
+                var _this2 = this;
+
+                var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.state.value;
+
+                return !value.split('').some(function (character, i) {
+                    return !_this2.isPermanentChar(i) && _this2.isAllowedChar(character, i);
+                });
+            }
+        }, {
             key: 'clearRange',
             value: function clearRange(value, start, length) {
-                var _this2 = this;
+                var _this3 = this;
 
                 var end = start + length;
                 var maskCharacter = this.maskCharacter;
@@ -550,13 +628,13 @@
 
                 if (!maskCharacter) {
                     var _ret = function () {
-                        var prefix = _this2.getPrefix();
+                        var prefix = _this3.getPrefix();
 
                         value = value.split('').filter(function (_, i) {
                             return i < prefix.length || i < start || i >= end;
                         }).join('');
                         return {
-                            v: _this2.formatValue(value)
+                            v: _this3.formatValue(value)
                         };
                     }();
 
@@ -566,7 +644,7 @@
                     if (i < start || i >= end) {
                         return c;
                     }
-                    if (_this2.isPermanentChar(i)) {
+                    if (_this3.isPermanentChar(i)) {
                         return mask[i];
                     }
                     return maskCharacter;
@@ -575,7 +653,7 @@
         }, {
             key: 'formatValue',
             value: function formatValue() {
-                var _this3 = this;
+                var _this4 = this;
 
                 var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
                 var maskCharacter = this.maskCharacter;
@@ -606,9 +684,9 @@
                 }
 
                 return value.split('').concat(new Array(mask.length - value.length).fill(null)).map(function (character, position) {
-                    if (_this3.isAllowedChar(character, position)) {
+                    if (_this4.isAllowedChar(character, position)) {
                         return character;
-                    } else if (_this3.isPermanentChar(position)) {
+                    } else if (_this4.isPermanentChar(position)) {
                         return mask[position];
                     }
                     return maskCharacter;
@@ -658,7 +736,7 @@
         }, {
             key: 'parseMask',
             value: function parseMask(rawMask) {
-                var _this4 = this;
+                var _this5 = this;
 
                 var permanents = []; // Keeps track of permanent position.
                 var isPermanent = false;
@@ -669,7 +747,7 @@
                 rawMask.split('').forEach(function (c) {
                     isPermanent = !isPermanent && c === '\\';
 
-                    if (isPermanent || !_this4.props.formatCharacters.hasOwnProperty(c)) {
+                    if (isPermanent || !_this5.props.formatCharacters.hasOwnProperty(c)) {
                         permanents.push(mask.length);
                     } else {
                         lastEditablePos = mask.length + 1;
@@ -679,30 +757,50 @@
                 return { mask: mask, permanents: permanents, lastEditablePos: lastEditablePos };
             }
         }, {
-            key: 'allowedCharacter',
-            value: function allowedCharacter(character) {
-                if (this.props.formatCharacters.hasOwnProperty(character)) {}
+            key: 'pasteText',
+            value: function pasteText(value, text, selection, event) {
+                var caretPosition = selection.start;
+                if (selection.length) {
+                    value = this.clearRange(value, caretPosition, selection.length);
+                }
+                var textLen = this.getRawSubstrLength(text, caretPosition);
+                value = this.insertRawSubstr(value, text, caretPosition);
+                caretPosition += textLen;
+                caretPosition = this.getRightEditablePosition(caretPosition) || caretPosition;
+                if (value !== this.getInputValue()) {
+                    if (event) {
+                        this.setInputValue(value);
+                    }
+                    this.setState({
+                        value: this.hasValue ? this.state.value : value
+                    });
+                    if (event && typeof this.props.onChange === "function") {
+                        this.props.onChange(event);
+                    }
+                }
+                this.setCaretPosition(caretPosition);
             }
         }, {
             key: 'render',
             value: function render() {
-                var _this5 = this;
+                var _this6 = this;
 
-                var value = this.state.child.props.value;
-                var handlerKeys = ["onFocus", "onBlur", "onChange", "onKeyDown", "onKeyPress", "onPaste"];
+                var value = this.child.props.value;
+                var handlerKeys = ["onFocus", "onBlur", "onChange", "onKeyDown", "onKeyPress", "onKeyUp", "onPaste"];
                 var props = { value: value };
                 handlerKeys.forEach(function (k) {
-                    props[k] = _this5[k];
+                    props[k] = _this6[k];
                 });
                 if (props.value != null) {
                     props.value = this.state.value;
                 }
-                var child = _react2.default.cloneElement(this.state.child, props);
+                props.onKeyUp = this.onKeyUp;
+                this.child = _react2.default.cloneElement(this.child, props);
 
                 return _react2.default.createElement(
                     'div',
                     { className: 'masked' },
-                    child
+                    this.child
                 );
             }
         }], [{
@@ -730,12 +828,6 @@
                 return windows.test(ua) && phone.test(ua);
             }
         }, {
-            key: 'isDOMElement',
-            value: function isDOMElement(element) {
-                return (typeof HTMLElement === 'undefined' ? 'undefined' : _typeof(HTMLElement)) === "object" ? element instanceof HTMLElement // DOM2
-                : element.nodeType === 1 && typeof element.nodeName === "string";
-            }
-        }, {
             key: 'requestAnimationFrame',
             value: function requestAnimationFrame() {
                 return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function (fn) {
@@ -747,21 +839,32 @@
         return Mask;
     }(_react2.default.Component);
 
+    /**
+     * Set default prop types.
+     * @type {{children: *, mask: *, maskCharacter: *, formatCharacters: *, alwaysShowMask: *, i18n: *}}
+     */
     Mask.propTypes = {
         children: _react2.default.PropTypes.object,
         mask: _react2.default.PropTypes.string,
         maskCharacter: _react2.default.PropTypes.string,
         formatCharacters: _react2.default.PropTypes.object,
+        alwaysShowMask: _react2.default.PropTypes.bool,
         i18n: _react2.default.PropTypes.string
     };
 
+    /**
+     * Default props for the component.
+     * @type {{maskCharacter: string, formatCharacters: {9: string, a: string, A: string, *: string}, alwaysShowMask: boolean}}
+     */
     Mask.defaultProps = {
         maskCharacter: "_",
         formatCharacters: {
             "9": "[0-9]",
-            "a": "[A-Za-z]",
+            "a": "^[A-Za-z]$",
+            "A": "^[A-Z]$",
             "*": "[A-Za-z0-9]"
-        }
+        },
+        alwaysShowMask: true
     };
 
     exports.default = Mask;
