@@ -11,7 +11,7 @@ class Mask extends React.Component {
 
         this.hasValue = this.props.value != null;
 
-        const child = React.Children.only(this.props.children);
+        const child = this.child = React.Children.only(this.props.children);
 
         const maskObj = this.parseMask(this.props.mask);
 
@@ -20,8 +20,9 @@ class Mask extends React.Component {
         this.mask = maskObj.mask;
         this.permanents = maskObj.permanents;
         this.lastEditablePos = maskObj.lastEditablePos;
-
         this.maskCharacter = this.props.maskCharacter;
+        this.lastCaretPosition = null;
+
 
         if (this.mask && (this.props.alwaysShowMask || value)) {
             value = this.formatValue(value);
@@ -39,8 +40,9 @@ class Mask extends React.Component {
         this.onChange = this.onChange.bind(this);
         this.onFocus = this.onFocus.bind(this);
 
-        this.onKeyPress = this.onKeyPress.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
+        this.onKeyPress = this.onKeyPress.bind(this);
+        this.onKeyUp = this.onKeyUp.bind(this);
     }
 
     /**
@@ -62,10 +64,10 @@ class Mask extends React.Component {
      * @returns {boolean}
      */
     static isAndroidBrowser(isFirefox = false) {
-        var windows = new RegExp("windows", "i");
-        var firefox = new RegExp("firefox", "i");
-        var android = new RegExp("android", "i");
-        var ua = navigator.userAgent;
+        const windows = new RegExp("windows", "i");
+        const firefox = new RegExp("firefox", "i");
+        const android = new RegExp("android", "i");
+        const ua = navigator.userAgent;
         return !windows.test(ua) && (isFirefox === firefox.test(ua)) && android.test(ua);
     }
 
@@ -74,44 +76,32 @@ class Mask extends React.Component {
      * @returns {boolean}
      */
     static isWindowsPhoneBrowser() {
-        var windows = new RegExp("windows", "i");
-        var phone = new RegExp("phone", "i");
-        var ua = navigator.userAgent;
+        const windows = new RegExp("windows", "i");
+        const phone = new RegExp("phone", "i");
+        const ua = navigator.userAgent;
         return windows.test(ua) && phone.test(ua);
     }
 
-    static isDOMElement(element) {
-        return typeof HTMLElement === "object"
-            ? element instanceof HTMLElement // DOM2
-            : element.nodeType === 1 && typeof element.nodeName === "string";
+    /**
+     * Returns a function to be able to ask the browser for an animation frame.
+     * Useful for setting the animation frame.
+     * @returns {Function}
+     */
+    static requestAnimationFrame() {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            (fn => setTimeout(fn, 0));
     }
 
+    /**
+     * Set's the inputs field value and the main value.
+     * @param value
+     */
     setInputValue(value) {
         const input = this.input;
         this.value = value;
         input.value = value;
-    }
-
-    /**
-     * @deprecated
-     * @returns {*}
-     */
-    getInputDOMNode() {
-        var input = this.input;
-
-        if (!input) {
-            return null;
-        }
-
-        // React 0.14
-        if (Mask.isDOMElement(input)) {
-            return input;
-        }
-        if (input.getDOMNode) {
-            return input.getDOMNode();
-        } else {
-            return ReactDOM.findDOMNode(input);
-        }
     }
 
     /**
@@ -126,6 +116,32 @@ class Mask extends React.Component {
         }
     }
 
+    /**
+     * Sets the caret to the position given bij the param.
+     * @param position
+     */
+    setCaretPosition(position) {
+        const raf = Mask.requestAnimationFrame();
+        const setPosition = this.setSelection.bind(this, position, 0);
+        setPosition();
+        raf(setPosition);
+
+        this.lastCaretPosition = position;
+    }
+
+    /**
+     * Get's the current caret position.
+     * @returns {number|*}
+     */
+    getCaretPosition() {
+        return this.getSelection().start;
+    }
+
+    /**
+     *
+     * @param start
+     * @param len
+     */
     setSelection(start, len = 0) {
         const input = this.input;
         const end = start + len;
@@ -164,17 +180,6 @@ class Mask extends React.Component {
         const length = end - start;
 
         return {start, end, length};
-    }
-
-    setCaretPosition(pos) {
-        const raf = Mask.requestAnimationFrame();
-        const setPosition = this.setSelection.bind(this, pos, 0);
-        setPosition();
-        raf(setPosition);
-    }
-
-    getCaretPosition() {
-        return this.getSelection().start;
     }
 
     /**
@@ -245,6 +250,42 @@ class Mask extends React.Component {
         return ++i || this.getPrefix().length;
     }
 
+    getRawSubstrLength(substr, position) {
+        const { mask, maskChar } = this;
+        substr = substr.split('');
+        for (var i = position; i < mask.length && substr.length; ) {
+            if (!this.isPermanentChar(i) || mask[i] === substr[0]) {
+                var character = substr.shift();
+                if (this.isAllowedChar(character, i, true)) {
+                    ++i;
+                }
+            }
+            else {
+                ++i;
+            }
+        }
+        return i - position;
+    }
+
+    /**
+     * Dub function that is in progress. No value descriptor is made so it will
+     * use the input given by an event.
+     * @returns {*}
+     */
+    getInputValue() {
+        const input = this.input;
+        const { valueDescriptor } = this;  // TODO: implement Value descriptor.
+
+        let value;
+        if (valueDescriptor) {
+            value = valueDescriptor.get.call(input);
+        } else {
+            value = input.value;
+        }
+
+        return value;
+    }
+
     componentWillMount() {
         const { mask } = this;
         const { value } = this.state;
@@ -284,6 +325,26 @@ class Mask extends React.Component {
     }
 
     onPaste(e) {
+        if (this.isAndroidBrowser) {
+            this.pasteSelection = this.getSelection();
+            this.setInputValue('');
+            return;
+        }
+
+        let text;
+
+        if (window.clipboardData && window.clipboardData.getData) { // IE
+            text = window.clipboardData.getData('Text');
+        } else if (e.clipboardData && e.clipboardData.getData) {
+            text = e.clipboardData.getData("text/plain");
+        }
+
+        if (text) {
+            let value = this.state.value;
+            let selection = this.getSelection();
+            this.pasteText(value, text, selection, event);
+        }
+        e.preventDefault();
 
     }
 
@@ -327,7 +388,7 @@ class Mask extends React.Component {
 
         if (value !== this.state.value) {
             this.setInputValue(value);
-            this.setState({value});
+            this.setState({value: this.hasValue ? this.state.value : value});
             preventDefault = true;
         }
 
@@ -373,7 +434,10 @@ class Mask extends React.Component {
         }
 
         if (value !== this.state.value) {
-            this.setState({value});
+            this.setInputValue(value);
+            this.setState({
+                value: this.hasValue ? this.state.value : value
+            });
         }
 
         e.preventDefault();
@@ -385,13 +449,27 @@ class Mask extends React.Component {
 
     }
 
-    onBlur(e) {
+    onKeyUp(e) {
+        this.setState({value: e.target.value});
+    }
 
+    onBlur(e) {
+        if (!this.props.alwaysShowMask && this.isEmpty()) {
+            let inputValue = '';
+            const isInputValueChanged = inputValue !== this.getInputValue();
+            if (isInputValueChanged) {
+                this.setInputValue(inputValue);
+            }
+
+            this.setState({
+                value: this.hasValue ? this.state.value : ""
+            });
+        }
     }
 
     onChange(e) {
         this.input = e.target;
-        var { pasteSelection, mask, maskCharacter, lastEditablePos, preventEmptyChange } = this;
+        const { pasteSelection, mask, maskCharacter, lastEditablePos, preventEmptyChange } = this;
         let value = this.input.value;
         let oldValue = this.state.value;
 
@@ -450,6 +528,12 @@ class Mask extends React.Component {
         }
 
         value = this.formatValue(value);
+
+        this.setState({
+            value: this.hasValue ? this.state.value : value
+        });
+
+        this.setCaretPosition(caretPosition);
     }
 
     onFocus(e) {
@@ -491,15 +575,32 @@ class Mask extends React.Component {
     /**
      * Return if the given index is a permanent character. Used to generate
      * a prefix.
-     * @param i
+     * @param index
      * @returns {boolean}
      */
-    isPermanentChar(i) {
-        return this.permanents.indexOf(i) !== -1;
+    isPermanentChar(index) {
+        return this.permanents.indexOf(index) !== -1;
     }
 
+    /**
+     * Check whether the input field is completely filled.
+     * @param value
+     * @returns {boolean}
+     */
     isFilled(value = this.state.value) {
         return this.getFilledLength(value) === this.mask.length;
+    }
+
+    /**
+     * Check if the input value is empty. This checks if given characters are
+     * permanent or given by user input.
+     * @param value
+     * @returns {boolean}
+     */
+    isEmpty(value = this.state.value) {
+        return !value.split('').some((character, i) =>
+            !this.isPermanentChar(i) && this.isAllowedChar(character, i)
+        );
     }
 
     clearRange(value, start, length) {
@@ -639,28 +740,34 @@ class Mask extends React.Component {
         return {mask, permanents, lastEditablePos};
     }
 
-    /**
-     * Returns a function to be able to ask the browser for an animation frame.
-     * Useful for setting the animation frame.
-     * @returns {Function}
-     */
-    static requestAnimationFrame() {
-        return window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            (fn => setTimeout(fn, 0));
-    }
-
-
-    allowedCharacter(character) {
-        if (this.props.formatCharacters.hasOwnProperty(character)) {
-
+    pasteText(value, text, selection, event) {
+        let caretPosition = selection.start;
+        if (selection.length) {
+            value = this.clearRange(value, caretPosition, selection.length);
         }
+        let textLen = this.getRawSubstrLength(text, caretPosition);
+        value = this.insertRawSubstr(value, text, caretPosition);
+        caretPosition += textLen;
+        caretPosition = this.getRightEditablePosition(caretPosition) || caretPosition;
+        if (value !== this.getInputValue()) {
+            if (event) {
+                this.setInputValue(value);
+            }
+            this.setState({
+                value: this.hasValue ? this.state.value : value
+            });
+            if (event && typeof this.props.onChange === "function") {
+                this.props.onChange(event);
+            }
+        }
+        this.setCaretPosition(caretPosition);
     }
+
+
 
     render() {
-        const value =  this.state.child.props.value;
-        const handlerKeys = ["onFocus", "onBlur", "onChange", "onKeyDown", "onKeyPress", "onPaste"];
+        const value = this.child.props.value;
+        const handlerKeys = ["onFocus", "onBlur", "onChange", "onKeyDown", "onKeyPress", "onKeyUp", "onPaste"];
         const props = {value};
         handlerKeys.forEach(k => {
             props[k] = this[k];
@@ -668,11 +775,12 @@ class Mask extends React.Component {
         if (props.value != null) {
             props.value = this.state.value;
         }
-        const child = React.cloneElement(this.state.child, props);
+        props.onKeyUp = this.onKeyUp;
+        this.child = React.cloneElement(this.child, props);
 
         return (
             <div className="masked">
-                {child}
+                {this.child}
             </div>
         );
     }
@@ -683,6 +791,7 @@ Mask.propTypes = {
     mask: React.PropTypes.string,
     maskCharacter: React.PropTypes.string,
     formatCharacters: React.PropTypes.object,
+    alwaysShowMask: React.PropTypes.bool,
     i18n: React.PropTypes.string
 };
 
@@ -690,9 +799,11 @@ Mask.defaultProps = {
     maskCharacter: "_",
     formatCharacters: {
         "9": "[0-9]",
-        "a": "[A-Za-z]",
+        "a": "^[A-Za-z]$",
+        "A": "^[A-Z]$",
         "*": "[A-Za-z0-9]"
-    }
+    },
+    alwaysShowMask: true
 };
 
 export default Mask;
