@@ -12,6 +12,15 @@ package by [juliancwirko](https://github.com/juliancwirko).
 Using npm:
 
     npm install --save react-masking
+    
+## TODO
+
+[ ] Auto capitalize when regex only contains capitalized letters like: `[A-Z]`
+[ ] Copy and paste actions.
+
+## Known bugs
+
+[ ] Works with react validation, but mask characters can be deleted. 
 
 ## License
 
