@@ -15,12 +15,12 @@ Using npm:
     
 ## TODO
 
-[ ] Auto capitalize when regex only contains capitalized letters like: `[A-Z]`
-[ ] Copy and paste actions.
+- [ ] Auto capitalize when regex only contains capitalized letters like: `[A-Z]`
+- [ ] Copy and paste actions.
 
 ## Known bugs
 
-[ ] Works with react validation, but mask characters can be deleted. 
+- [ ] Works with react validation, but mask characters can be deleted. 
 
 ## License
 
