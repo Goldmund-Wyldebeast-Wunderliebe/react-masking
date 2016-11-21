@@ -13,6 +13,7 @@ Using npm:
 
     npm install --save react-masking
     
+    
 Then in your React Package, do:
 
     import Mask from 'react-masking';
@@ -31,6 +32,7 @@ Then in your React Package, do:
 
 ### Code
 - [ ] Add comment blocks to functions. Current version is barely readable.
+
 
 ## Known bugs
 
