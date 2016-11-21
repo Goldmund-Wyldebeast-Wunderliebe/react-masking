@@ -15,7 +15,7 @@ module.exports = {
     ],
     devtool: process.env.WEBPACK_DEVTOOL || 'cheap-module-source-map',
     output: {
-        path: path.join(__dirname, 'public'),
+        path: path.join(__dirname, 'docs'),
         filename: 'bundle.js'
     },
     resolve: {
@@ -25,7 +25,7 @@ module.exports = {
         loaders
     },
     devServer: {
-        contentBase: "./public",
+        contentBase: "./docs",
         // do not print bundle build stats
         noInfo: true,
         // enable HMR

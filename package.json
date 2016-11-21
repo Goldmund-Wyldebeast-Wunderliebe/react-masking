@@ -21,7 +21,7 @@
     "mocha": "--require scripts/mocha_runner src/**/__tests__/**/*.js"
   },
   "scripts": {
-    "build": "webpack --config webpack.production.config.js --progress --profile --colors",
+    "build": "webpack --config webpack.config.js --progress --profile --colors",
     "prepublish": "webpack --config webpack.config.js --progress --profile --colors",
     "lint": "eslint ./src",
     "start": "webpack-dev-server --progress --profile --colors -d",
