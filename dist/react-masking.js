@@ -278,8 +278,8 @@
         }, {
             key: 'getRawSubstrLength',
             value: function getRawSubstrLength(substr, position) {
-                var mask = this.mask;
-                var maskChar = this.maskChar;
+                var mask = this.mask,
+                    maskChar = this.maskChar;
 
                 substr = substr.split('');
                 for (var i = position; i < mask.length && substr.length;) {
@@ -433,9 +433,9 @@
                 var caretPosition = this.getCaretPosition();
 
                 var value = this.state.value;
-                var mask = this.mask;
-                var maskCharacter = this.maskCharacter;
-                var lastEditablePos = this.lastEditablePos;
+                var mask = this.mask,
+                    maskCharacter = this.maskCharacter,
+                    lastEditablePos = this.lastEditablePos;
 
                 var prefix = this.getPrefix();
                 var selection = this.getSelection();
@@ -491,11 +491,11 @@
             key: 'onChange',
             value: function onChange(e) {
                 this.input = e.target;
-                var pasteSelection = this.pasteSelection;
-                var mask = this.mask;
-                var maskCharacter = this.maskCharacter;
-                var lastEditablePos = this.lastEditablePos;
-                var preventEmptyChange = this.preventEmptyChange;
+                var pasteSelection = this.pasteSelection,
+                    mask = this.mask,
+                    maskCharacter = this.maskCharacter,
+                    lastEditablePos = this.lastEditablePos,
+                    preventEmptyChange = this.preventEmptyChange;
 
                 var value = this.input.value;
                 var oldValue = this.state.value;
@@ -581,8 +581,8 @@
             key: 'isAllowedChar',
             value: function isAllowedChar(character, position) {
                 var allowMaskChar = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-                var mask = this.mask;
-                var maskCharacter = this.maskCharacter;
+                var mask = this.mask,
+                    maskCharacter = this.maskCharacter;
 
                 var ruleCharacter = mask[position];
                 var characterRule = this.props.formatCharacters[ruleCharacter];
@@ -622,8 +622,8 @@
                 var _this3 = this;
 
                 var end = start + length;
-                var maskCharacter = this.maskCharacter;
-                var mask = this.mask;
+                var maskCharacter = this.maskCharacter,
+                    mask = this.mask;
 
 
                 if (!maskCharacter) {
@@ -656,8 +656,8 @@
                 var _this4 = this;
 
                 var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-                var maskCharacter = this.maskCharacter;
-                var mask = this.mask;
+                var maskCharacter = this.maskCharacter,
+                    mask = this.mask;
 
 
                 if (!maskCharacter) {
@@ -695,8 +695,8 @@
         }, {
             key: 'insertRawSubstr',
             value: function insertRawSubstr(value, substr, position) {
-                var mask = this.mask;
-                var maskCharacter = this.maskCharacter;
+                var mask = this.mask,
+                    maskCharacter = this.maskCharacter;
 
                 var isFilled = this.isFilled(value);
                 var prefix = this.getPrefix();

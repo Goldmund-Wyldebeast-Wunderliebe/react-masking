@@ -1,4 +1,5 @@
 module.exports = [
+	{ test: /\.json$/, loader: "json-loader" },
 	{
 		test: /\.jsx?$/,
 		exclude: /(node_modules|bower_components|public)/,
