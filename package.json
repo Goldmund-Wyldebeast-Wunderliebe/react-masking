@@ -1,6 +1,6 @@
 {
   "name": "react-masking",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "React Masking component meant to be used with Inputs, made especially with packages like React Validation in mind.",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "webpack --config webpack.production.config.js --progress --profile --colors",
-    "prepublish": "babel --plugins 'transform-es2015-modules-umd' src --ignore __tests__ --out-dir ./dist",
+    "prepublish": "webpack --config webpack.config.js --progress --profile --colors",
     "lint": "eslint ./src",
     "start": "webpack-dev-server --progress --profile --colors -d",
     "lintfix": "eslint ./src --fix",
