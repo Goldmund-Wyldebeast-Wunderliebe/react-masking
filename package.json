@@ -1,6 +1,6 @@
 {
   "name": "react-masking",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React Masking component meant to be used with Inputs, made especially with packages like React Validation in mind.",
   "repository": {
     "type": "git",
@@ -21,9 +21,9 @@
     "mocha": "--require scripts/mocha_runner src/**/__tests__/**/*.js"
   },
   "scripts": {
-    "build": "webpack --config webpack.config.js --progress --profile --colors",
-    "prepublish": "webpack --config webpack.config.js --progress --profile --colors",
-    "lint": "eslint ./src",
+    "build": "webpack --config webpack.production.config.js --progress --profile --colors",
+    "prepublish": "webpack --config webpack.production.config.js --progress --profile --colors",
+    "lint": "eslint ./src/**/*.jsx",
     "start": "webpack-dev-server --progress --profile --colors -d",
     "lintfix": "eslint ./src --fix",
     "testonly": "mocha $npm_package_options_mocha",
@@ -51,12 +51,10 @@
     "eslint-plugin-react": "^4.2.3",
     "html-webpack-plugin": "^2.22.0",
     "jsdom": "^8.1.0",
-    "mocha": "^2.4.5",
     "nodemon": "^1.9.1",
     "react-addons-test-utils": "^15.0.0",
     "react-hot-loader": "^3.0.0-beta.6",
     "react-validation": "^2.10.6",
-    "sinon": "^1.17.3",
     "validator": "^6.1.0",
     "webpack": "^1.13.2",
     "webpack-cleanup-plugin": "^0.4.1",
@@ -68,7 +66,7 @@
   },
   "dependencies": {
     "classnames": "^2.1.1",
-    "react": "^15.0.0",
-    "react-dom": "^15.0.0"
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1"
   }
 }

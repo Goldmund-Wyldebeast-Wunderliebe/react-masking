@@ -1,810 +1,875 @@
 import React from 'react';
 
+/**
+ * React masking component.
+ */
 class Mask extends React.Component {
-    constructor(props) {
-        super(props);
+  /**
+   * Constructor for Masking component. Sets all values needed for the rest of
+   * the component and binds all needed actions.
+   * @param {object} props - See defaultProps and propTypes.
+   */
+  constructor(props) {
+    super(props);
 
-        this.hasValue = this.props.value != null;
+    this.hasValue = !!this.props.value;
 
-        const child = this.child = React.Children.only(this.props.children);
+    const child = this.child = React.Children.only(this.props.children);
 
-        const maskObj = this.parseMask(this.props.mask);
+    const maskObj = this.parseMask(this.props.mask);
 
-        let value = this.props.value || child.props.value;
+    let value = this.props.value || child.props.value;
 
-        this.mask = maskObj.mask;
-        this.permanents = maskObj.permanents;
-        this.lastEditablePos = maskObj.lastEditablePos;
-        this.maskCharacter = this.props.maskCharacter;
-        this.lastCaretPosition = null;
+    this.mask = maskObj.mask;
+    this.permanents = maskObj.permanents;
+    this.lastEditablePos = maskObj.lastEditablePos;
+    this.maskCharacter = this.props.maskCharacter;
 
 
-        if (this.mask && (this.props.alwaysShowMask || value)) {
-            value = this.formatValue(value);
+    if (this.mask && (this.props.alwaysShowMask || value)) {
+      value = this.formatValue(value);
+    }
+
+    this.state = {child, value};
+
+    this.onPaste = this.onPaste.bind(this);
+    this.onBlur = this.onBlur.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.onFocus = this.onFocus.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyPress = this.onKeyPress.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
+  }
+
+  /**
+   * Replace substr of value on a given position with a new substr.
+   * @param {string} value - initial value
+   * @param {string} newSubstr - substring that should replace part of the
+   *  value
+   * @param {number} position - position of substring
+   * @returns {string} replaced substring
+   */
+  static replaceSubstr(value, newSubstr, position) {
+    return value.slice(0, position)
+      + newSubstr
+      + value.slice(position + newSubstr.length);
+  }
+
+  /**
+   * Check whether the browser is an android browser.
+   * @param {boolean} isFirefox - switch if is firefox browser on android.
+   * @returns {boolean} true or false if android.
+   */
+  static isAndroidBrowser(isFirefox = false) {
+    const windows = new RegExp('windows', 'i');
+    const firefox = new RegExp('firefox', 'i');
+    const android = new RegExp('android', 'i');
+    const ua = navigator.userAgent;
+    return !windows.test(ua) && (isFirefox === firefox.test(ua))
+      && android.test(ua);
+  }
+
+  /**
+   * Check whether the browser is an windows phone browser.
+   * @returns {boolean} true or false if windows phone.
+   */
+  static isWindowsPhoneBrowser() {
+    const windows = new RegExp('windows', 'i');
+    const phone = new RegExp('phone', 'i');
+    const ua = navigator.userAgent;
+    return windows.test(ua) && phone.test(ua);
+  }
+
+  /**
+   * Returns a function to be able to ask the browser for an animation frame.
+   * Useful for setting the cursor.
+   * @returns {Function} animation frame function.
+   */
+  static requestAnimationFrame() {
+    return window.requestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.mozRequestAnimationFrame ||
+      (fn => setTimeout(fn, 0));
+  }
+
+  /**
+   * Set's the inputs field value and the main value.
+   * @param {string} value - input value.
+   * @return {undefined}
+   */
+  setInputValue(value) {
+    const input = this.input;
+    input.value = value;
+  }
+
+  /**
+   * Sets the caret to the end position of the editable area.
+   * @return {undefined}
+   */
+  setCaretToEnd() {
+    const filledLength = this.getFilledLength();
+    const position = this.getRightEditablePosition(filledLength);
+
+    if (position !== null) {
+      this.setCaretPosition(position);
+    }
+  }
+
+  /**
+   * Sets the caret to the position given bij the param.
+   * @param {number} position - Position of the caret.
+   * @returns {undefined}
+   */
+  setCaretPosition(position) {
+    const raf = Mask.requestAnimationFrame();
+    const setPosition = this.setSelection.bind(this, position, 0);
+    setPosition();
+    raf(setPosition);
+  }
+
+  /**
+   * Get's the current caret position.
+   * @returns {number} Position of caret.
+   */
+  getCaretPosition() {
+    return this.getSelection().start;
+  }
+
+  /**
+   * Set seleciton based on start and length. Often used for setting the caret
+   * to the right position.
+   * @param {number} start - Start of selection
+   * @param {number} len - length of selection, can be 0.
+   * @returns {undefined}
+   */
+  setSelection(start, len = 0) {
+    const input = this.input;
+    const end = start + len;
+    let range = 0;
+    if ('selectionStart' in input && 'selectionEnd' in input) {
+      input.selectionStart = start;
+      input.selectionEnd = end;
+    } else {
+      range = input.createTextRange();
+      range.collapse(true);
+      range.moveStart('character', start);
+      range.moveEnd('character', end - start);
+      range.select();
+    }
+  }
+
+  /**
+   * Get selection based on dom node. Used document when selection is not
+   * in the input node.
+   * @returns {{start: number, end: number, length: number}} Object with start,
+   *  end and length of selection.
+   */
+  getSelection() {
+    const input = this.input;
+    let start = 0;
+    let end = 0;
+    if ('selectionStart' in input && 'selectionEnd' in input) {
+      start = input.selectionStart;
+      end = input.selectionEnd;
+    } else {
+      const range = document.selection.createRange();
+      if (range.parentElement() === input) {
+        start = -range.moveStart('character', -input.value.length);
+        end = -range.moveEnd('character', -input.value.length);
+      }
+    }
+
+    const length = end - start;
+
+    return {start, end, length};
+  }
+
+  /**
+   * Get the prefix from the mask. Useful for on focus character position.
+   * @returns {string} Prefix string
+   */
+  getPrefix() {
+    const {mask} = this;
+    let prefix = '';
+    for (let i = 0; i < mask.length && this.isPermanentChar(i); ++i) {
+      prefix += mask[i];
+    }
+    return prefix;
+  }
+
+
+  /**
+   * Gets the next editable position based on current position.
+   * @param {number} position - Current position
+   * @returns {number|null} Returns editable position or null.
+   */
+  getEditablePosition(position) {
+    const {mask} = this;
+    let i = position;
+
+    for (; i < mask.length; i++) {
+      if (!this.isPermanentChar(i)) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets the left editable position based on current position.
+   * @param {number} position - Current position
+   * @returns {number|null} Returns editable position or null.
+   */
+  getLeftEditablePosition(position) {
+    let i = position;
+    for (; i >= 0; --i) {
+      if (!this.isPermanentChar(i)) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets the right editable position based on current position.
+   * @param {number} position - Current position
+   * @returns {number|null} Returns editable position or null.
+   */
+  getRightEditablePosition(position) {
+    const {mask} = this;
+    let i = position;
+    for (; i < mask.length; ++i) {
+      if (!this.isPermanentChar(i)) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Calculates filled length based on value.
+   * @param {string} value - Value to be used to calculate filled length.
+   * @returns {number} Filled length of input
+   */
+  getFilledLength(value = this.state.value) {
+    let character, i;
+    const {maskCharacter} = this;
+    if (!maskCharacter) {
+      return value.length;
+    }
+
+    for (i = value.length - 1; i >= 0; --i) {
+      character = value[i];
+      if (!this.isPermanentChar(i) && this.isAllowedChar(character, i)) {
+        break;
+      }
+    }
+    return ++i || this.getPrefix().length;
+  }
+
+  /**
+   * Returns the length of the substring.
+   * @param {string} substr - Substring
+   * @param {position} position - Position of substring
+   * @returns {number} substrLength - Length of substring
+   */
+  getRawSubstrLength(substr, position) {
+    let character;
+    const {mask} = this;
+    let i = position;
+    let substrArray = substr.split('');
+    for (; i < mask.length && substrArray.length;) {
+      if (!this.isPermanentChar(i) || mask[i] === substrArray[0]) {
+        character = substrArray.shift();
+        if (this.isAllowedChar(character, i, true)) {
+          ++i;
         }
+      } else {
+        ++i;
+      }
+    }
+    return i - position;
+  }
 
-        this.state = {child, value};
+  /**
+   * Dub function that is in progress. No value descriptor is made so it will
+   * use the input given by an event.
+   * @returns {number} value.
+   */
+  getInputValue() {
+    const input = this.input;
+    const {valueDescriptor} = this;
 
-        this.onCopy = this.onCopy.bind(this);
-        this.onCut = this.onCut.bind(this);
-        this.onPaste = this.onPaste.bind(this);
-        this.onBlur = this.onBlur.bind(this);
-        this.onChange = this.onChange.bind(this);
-        this.onCopy = this.onCopy.bind(this);
-
-        this.onChange = this.onChange.bind(this);
-        this.onFocus = this.onFocus.bind(this);
-
-        this.onKeyDown = this.onKeyDown.bind(this);
-        this.onKeyPress = this.onKeyPress.bind(this);
-        this.onKeyUp = this.onKeyUp.bind(this);
+    let value;
+    if (valueDescriptor) {
+      value = valueDescriptor.get.call(input);
+    } else {
+      value = input.value;
     }
 
-    /**
-     * Replace substr of value on a given position with a new substr.
-     * @param value
-     * @param newSubstr
-     * @param position
-     * @returns {String}
-     */
-    static replaceSubstr(value, newSubstr, position) {
-        return value.slice(0, position)
-            + newSubstr
-            + value.slice(position + newSubstr.length);
+    return value;
+  }
+
+  /**
+   * Component will mount function. Ensures initial value setting.
+   * @returns {undefined}
+   */
+  componentWillMount() {
+    const {mask} = this;
+    const {value} = this.state;
+    if (mask && value) {
+      this.setState({value});
+    }
+  }
+
+  /**
+   * Component did mount function that checks what type of browser is used.
+   * @return {undefined}
+   */
+  componentDidMount() {
+    this.isAndroidBrowser = Mask.isAndroidBrowser();
+    this.isWindowsPhoneBrowser = Mask.isWindowsPhoneBrowser();
+    this.isAndroidFirefox = Mask.isAndroidBrowser(true);
+  }
+
+  /**
+   * On paste action
+   * @param {object} event - Browser event.
+   * @returns {undefined}
+   */
+  onPaste(event) {
+    if (this.isAndroidBrowser) {
+      this.pasteSelection = this.getSelection();
+      this.setInputValue('');
+      return;
     }
 
-    /**
-     * Check whether the browser is an android browser.
-     * @param isFirefox
-     * @returns {boolean}
-     */
-    static isAndroidBrowser(isFirefox = false) {
-        const windows = new RegExp("windows", "i");
-        const firefox = new RegExp("firefox", "i");
-        const android = new RegExp("android", "i");
-        const ua = navigator.userAgent;
-        return !windows.test(ua) && (isFirefox === firefox.test(ua)) && android.test(ua);
+    let text;
+
+    if (window.clipboardData && window.clipboardData.getData) { // IE
+      text = window.clipboardData.getData('Text');
+    } else if (event.clipboardData && event.clipboardData.getData) {
+      text = event.clipboardData.getData('text/plain');
     }
 
-    /**
-     * Check whether the browser is an windows phone browser.
-     * @returns {boolean}
-     */
-    static isWindowsPhoneBrowser() {
-        const windows = new RegExp("windows", "i");
-        const phone = new RegExp("phone", "i");
-        const ua = navigator.userAgent;
-        return windows.test(ua) && phone.test(ua);
+    if (text) {
+      let value = this.state.value;
+      let selection = this.getSelection();
+      this.pasteText(value, text, selection, event);
     }
+    event.preventDefault();
 
-    /**
-     * Returns a function to be able to ask the browser for an animation frame.
-     * Useful for setting the animation frame.
-     * @returns {Function}
-     */
-    static requestAnimationFrame() {
-        return window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            (fn => setTimeout(fn, 0));
-    }
+  }
 
-    /**
-     * Set's the inputs field value and the main value.
-     * @param value
-     */
-    setInputValue(value) {
-        const input = this.input;
-        this.value = value;
-        input.value = value;
-    }
+  /**
+   * Handles delete and backspace actions onKeyDown. Also triggers bound
+   * actions on the Mask.
+   * @param {object} event - Browser event.
+   * @returns {undefined}
+   */
+  onKeyDown(event) {
+    this.input = event.target;
+    const key = event.key;
+    let {value} = this.state;
+    let preventDefault = false;
+    let caretPosition = this.getCaretPosition();
 
-    /**
-     * Sets the caret to the end position of the editable area.
-     */
-    setCaretToEnd() {
-        const filledLength = this.getFilledLength();
-        const position = this.getRightEditablePosition(filledLength);
-
-        if (position !== null) {
-            this.setCaretPosition(position);
-        }
-    }
-
-    /**
-     * Sets the caret to the position given bij the param.
-     * @param position
-     */
-    setCaretPosition(position) {
-        const raf = Mask.requestAnimationFrame();
-        const setPosition = this.setSelection.bind(this, position, 0);
-        setPosition();
-        raf(setPosition);
-
-        this.lastCaretPosition = position;
-    }
-
-    /**
-     * Get's the current caret position.
-     * @returns {number|*}
-     */
-    getCaretPosition() {
-        return this.getSelection().start;
-    }
-
-    /**
-     *
-     * @param start
-     * @param len
-     */
-    setSelection(start, len = 0) {
-        const input = this.input;
-        const end = start + len;
-        if ("selectionStart" in input && "selectionEnd" in input) {
-            input.selectionStart = start;
-            input.selectionEnd = end;
-        } else {
-            var range = input.createTextRange();
-            range.collapse(true);
-            range.moveStart("character", start);
-            range.moveEnd("character", end - start);
-            range.select();
-        }
-    }
-
-    /**
-     * Get selection based on dom node. Used document when selection is not
-     * in the input node.
-     * @returns {{start: number, end: number, length: number}}
-     */
-    getSelection() {
-        const input = this.input;
-        let start = 0;
-        let end = 0;
-        if ("selectionStart" in input && "selectionEnd" in input) {
-            start = input.selectionStart;
-            end = input.selectionEnd;
-        } else {
-            const range = document.selection.createRange();
-            if (range.parentElement() === input) {
-                start = -range.moveStart('character', -input.value.length);
-                end = -range.moveEnd('character', -input.value.length);
-            }
-        }
-
-        const length = end - start;
-
-        return {start, end, length};
-    }
-
-    /**
-     * Get the prefix from the mask. Useful for on focus character position.
-     * @returns {string}
-     */
-    getPrefix() {
-        const { mask } = this;
-        let prefix = '';
-        for (let i = 0; i < mask.length && this.isPermanentChar(i); ++i) {
-            prefix += mask[i];
-        }
-        return prefix;
-    }
-
-
-    /**
-     * Gets the next editable position based on current position.
-     * @param position
-     * @returns {*}
-     */
-    getEditablePosition(position) {
-        const { mask } = this;
-
-        for (let i = position; i < mask.length; i++) {
-            if (!this.isPermanentChar(i)) {
-                return i;
-            }
-        }
-        return null;
-    }
-
-    getLeftEditablePosition(position) {
-        const { mask } = this;
-
-        for (let i = position; i >= 0; --i) {
-            if (!this.isPermanentChar(i)) {
-                return i;
-            }
-        }
-        return null;
-    }
-
-    getRightEditablePosition(position) {
-        const { mask } = this;
-
-        for (let i = position; i < mask.length; ++i) {
-            if (!this.isPermanentChar(i)) {
-                return i;
-            }
-        }
-        return null;
-    }
-
-    getFilledLength(value = this.state.value) {
-        let i;
-        const { maskCharacter } = this;
-        if (!maskCharacter) {
-            return value.length;
-        }
-
-        for (i = value.length - 1; i >= 0; --i) {
-            let character = value[i];
-            if (!this.isPermanentChar(i) && this.isAllowedChar(character, i)) {
-                break;
-            }
-        }
-        return ++i || this.getPrefix().length;
-    }
-
-    getRawSubstrLength(substr, position) {
-        const { mask, maskChar } = this;
-        substr = substr.split('');
-        for (var i = position; i < mask.length && substr.length; ) {
-            if (!this.isPermanentChar(i) || mask[i] === substr[0]) {
-                var character = substr.shift();
-                if (this.isAllowedChar(character, i, true)) {
-                    ++i;
-                }
-            }
-            else {
-                ++i;
-            }
-        }
-        return i - position;
-    }
-
-    /**
-     * Dub function that is in progress. No value descriptor is made so it will
-     * use the input given by an event.
-     * @returns {*}
-     */
-    getInputValue() {
-        const input = this.input;
-        const { valueDescriptor } = this;  // TODO: implement Value descriptor.
-
-        let value;
-        if (valueDescriptor) {
-            value = valueDescriptor.get.call(input);
-        } else {
-            value = input.value;
-        }
-
-        return value;
-    }
-
-    componentWillMount() {
-        const { mask } = this;
-        const { value } = this.state;
-        if (mask && value) {
-            this.setState({value});
-        }
-    }
-
-    componentDidMount() {
-        this.isAndroidBrowser = Mask.isAndroidBrowser();
-        this.isWindowsPhoneBrowser = Mask.isWindowsPhoneBrowser();
-        this.isAndroidFirefox = Mask.isAndroidBrowser(true);
-    }
-
-    componentWillReceiveProps(nextProps) {
-
-    }
-
-    componentWillUpdate(nextProps, nextState) {
-
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-
-    }
-
-    componentWillUnmount() {
-
-    }
-
-    onCopy(e) {
-
-    }
-
-    onCut(e) {
-
-    }
-
-    onPaste(e) {
-        if (this.isAndroidBrowser) {
-            this.pasteSelection = this.getSelection();
-            this.setInputValue('');
-            return;
-        }
-
-        let text;
-
-        if (window.clipboardData && window.clipboardData.getData) { // IE
-            text = window.clipboardData.getData('Text');
-        } else if (e.clipboardData && e.clipboardData.getData) {
-            text = e.clipboardData.getData("text/plain");
-        }
-
-        if (text) {
-            let value = this.state.value;
-            let selection = this.getSelection();
-            this.pasteText(value, text, selection, event);
-        }
-        e.preventDefault();
-
-    }
-
-    /**
-     * Handles delete and backspace actions onKeyDown. Also triggers bound
-     * actions on the Mask.
-     * @param e
-     */
-    onKeyDown(e) {
-        this.input = e.target;
-        const key = e.key;
-        let { value } = this.state;
-        let preventDefault = false;
-        let caretPosition = this.getCaretPosition();
-
-        switch (key) {
-            case "Backspace":
-            case "Delete":
-                const prefix = this.getPrefix();
-                const deleteFromRight = key === 'Delete';
-                const selectionRange = this.getSelection();
-
-                if (selectionRange.length) {
-                    value = this.clearRange(value, selectionRange.start, selectionRange.length);
-                } else if (caretPosition < prefix.length
-                    || (!deleteFromRight && caretPosition === prefix.length)) {
-                    caretPosition = prefix.length;
-                } else {
-                    const editablePosition = deleteFromRight ?
-                        this.getRightEditablePosition(caretPosition) :
-                        this.getLeftEditablePosition(caretPosition - 1);
-                    if (editablePosition !== null) {
-                        value = this.clearRange(value, editablePosition, 1);
-                        caretPosition = editablePosition;
-                    }
-                }
-                break;
-            default:
-                break;
-        }
-
-        if (value !== this.state.value) {
-            this.setInputValue(value);
-            this.setState({value: this.hasValue ? this.state.value : value});
-            preventDefault = true;
-        }
-
-        if (preventDefault) {
-            e.preventDefault();
-            this.setCaretPosition(caretPosition);
-        }
-
-    }
-
-    onKeyPress(e) {
-        const key = e.key;
-        this.input = e.target;
-
-        if (key === "Enter" || e.ctrlKey || e.metaKey) {
-            return;
-        }
-
-        // When browser is windows phone browser return, keypress cannot be
-        // hijacked.
-        if (this.isWindowsPhoneBrowser) {
-            return;
-        }
-
-        let caretPosition = this.getCaretPosition();
-
-        let { value } = this.state;
-        const { mask, maskCharacter, lastEditablePos } = this;
+    switch (key) {
+      case 'Backspace':
+      case 'Delete': {
         const prefix = this.getPrefix();
-        const selection = this.getSelection();
+        const deleteFromRight = key === 'Delete';
+        const selectionRange = this.getSelection();
 
-        if (this.isPermanentChar(caretPosition) && mask[caretPosition] === key) {
-            value = this.insertRawSubstr(value, key, caretPosition);
-            ++caretPosition;
+        if (selectionRange.length) {
+          value = this.clearRange(value, selectionRange.start, selectionRange.length);
+        } else if (caretPosition < prefix.length
+          || (!deleteFromRight && caretPosition === prefix.length)) {
+          caretPosition = prefix.length;
         } else {
-            const editablePosition = this.getRightEditablePosition(caretPosition);
-
-            if (editablePosition !== null && this.isAllowedChar(key, editablePosition)) {
-                value = this.clearRange(value, selection.start, selection.length);
-                value = this.insertRawSubstr(value, key, editablePosition);
-                caretPosition = editablePosition + 1;
-            }
+          const editablePosition = deleteFromRight ?
+            this.getRightEditablePosition(caretPosition) :
+            this.getLeftEditablePosition(caretPosition - 1);
+          if (editablePosition !== null) {
+            value = this.clearRange(value, editablePosition, 1);
+            caretPosition = editablePosition;
+          }
         }
-
-        if (value !== this.state.value) {
-            this.setInputValue(value);
-            this.setState({
-                value: this.hasValue ? this.state.value : value
-            });
-        }
-
-        e.preventDefault();
-
-        if (caretPosition < lastEditablePos && caretPosition > prefix.length) {
-            caretPosition = this.getRightEditablePosition(caretPosition);
-        }
-        this.setCaretPosition(caretPosition);
-
+        break;
+      }
+      default: {
+        break;
+      }
     }
 
-    onKeyUp(e) {
-        this.setState({value: e.target.value});
+    if (value !== this.state.value) {
+      this.setInputValue(value);
+      this.setState({value: this.hasValue ? this.state.value : value});
+      preventDefault = true;
     }
 
-    onBlur(e) {
-        if (!this.props.alwaysShowMask && this.isEmpty()) {
-            let inputValue = '';
-            const isInputValueChanged = inputValue !== this.getInputValue();
-            if (isInputValueChanged) {
-                this.setInputValue(inputValue);
-            }
-
-            this.setState({
-                value: this.hasValue ? this.state.value : ""
-            });
-        }
+    if (preventDefault) {
+      event.preventDefault();
+      this.setCaretPosition(caretPosition);
     }
 
-    onChange(e) {
-        this.input = e.target;
-        const { pasteSelection, mask, maskCharacter, lastEditablePos, preventEmptyChange } = this;
-        let value = this.input.value;
-        let oldValue = this.state.value;
+  }
 
-        if (pasteSelection) {
-            this.pasteSelection = null;
-            this.pasteText(oldValue, value, pasteSelection, e);
-            return;
+  /**
+   * On Key Press event. Makes sure that the correct state is sent on the value
+   * and sets the caret position.
+   * @param {object} event - Browser event
+   * @returns {undefined}
+   */
+  onKeyPress(event) {
+    const key = event.key;
+    this.input = event.target;
+
+    if (key === 'Enter' || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    // When browser is windows phone browser return, keypress cannot be
+    // hijacked.
+    if (this.isWindowsPhoneBrowser) {
+      return;
+    }
+
+    let caretPosition = this.getCaretPosition();
+
+    let {value} = this.state;
+    const {mask, lastEditablePos} = this;
+    const prefix = this.getPrefix();
+    const selection = this.getSelection();
+
+    if (this.isPermanentChar(caretPosition) && mask[caretPosition] === key) {
+      value = this.insertRawSubstr(value, key, caretPosition);
+      ++caretPosition;
+    } else {
+      const editablePosition = this.getRightEditablePosition(caretPosition);
+
+      if (editablePosition !== null && this.isAllowedChar(key, editablePosition)) {
+        value = this.clearRange(value, selection.start, selection.length);
+        value = this.insertRawSubstr(value, key, editablePosition);
+        caretPosition = editablePosition + 1;
+      }
+    }
+
+    if (value !== this.state.value) {
+      this.setInputValue(value);
+      this.setState({
+        value: this.hasValue ? this.state.value : value
+      });
+    }
+
+    event.preventDefault();
+
+    if (caretPosition < lastEditablePos && caretPosition > prefix.length) {
+      caretPosition = this.getRightEditablePosition(caretPosition);
+    }
+    this.setCaretPosition(caretPosition);
+
+  }
+
+  /**
+   * On Key Up event. Enforces state setting of value.
+   * @param {object} event - Browser event
+   * @returns {undefined}
+   */
+  onKeyUp(event) {
+    this.setState({value: event.target.value});
+  }
+
+  /**
+   * On Blur event for the input field. Makes sure the correct state has been
+   * set.
+   * @returns {undefined}
+   */
+  onBlur() {
+    if (!this.props.alwaysShowMask && this.isEmpty()) {
+      let inputValue = '';
+      const isInputValueChanged = inputValue !== this.getInputValue();
+      if (isInputValueChanged) {
+        this.setInputValue(inputValue);
+      }
+
+      this.setState({
+        value: this.hasValue ? this.state.value : ''
+      });
+    }
+  }
+
+  /**
+   * On Change event. This is the main event listener that makes sure all
+   * masking changes will be set correctly.
+   * @param {object} event - Browser event
+   * @returns {undefined}
+   */
+  onChange(event) {
+    this.input = event.target;
+    const {pasteSelection, mask, maskCharacter, lastEditablePos} = this;
+    let value = this.input.value;
+    let oldValue = this.state.value;
+
+    if (pasteSelection) {
+      this.pasteSelection = null;
+      this.pasteText(oldValue, value, pasteSelection, event);
+      return;
+    }
+
+    const selection = this.getSelection();
+    const prefix = this.getPrefix();
+    let caretPosition = selection.end;
+    let clearedValue;
+
+    if (value.length > oldValue.length) {
+      const substrLength = value.length - oldValue.length;
+      const startPosition = selection.end - substrLength;
+      const enteredSubstr = value.substr(startPosition, substrLength);
+
+      if (startPosition < lastEditablePos &&
+        (substrLength !== 1 || enteredSubstr !== mask[startPosition])) {
+        caretPosition = this.getRightEditablePosition(startPosition);
+      } else {
+        caretPosition = startPosition;
+      }
+
+      value = value.substr(0, startPosition) + value.substr(startPosition + substrLength);
+
+      clearedValue = this.clearRange(value, startPosition, mask.length - startPosition);
+      clearedValue = this.insertRawSubstr(clearedValue, enteredSubstr, caretPosition);
+
+      value = this.insertRawSubstr(oldValue, enteredSubstr, caretPosition);
+      if (substrLength !== 1 || (caretPosition >= prefix.length && caretPosition < lastEditablePos)) {
+        caretPosition = this.getFilledLength(clearedValue);
+      } else if (caretPosition < lastEditablePos) {
+        caretPosition++;
+      }
+    } else if (value.length < oldValue.length) {
+      const removedLength = mask.length - value.length;
+      clearedValue = this.clearRange(oldValue, selection.end, removedLength);
+      const substr = value.substr(0, selection.end);
+      const clearOnly = substr === oldValue.substr(0, selection.end);
+
+      if (maskCharacter) {
+        value = this.insertRawSubstr(clearedValue, substr, 0);
+      }
+
+      clearedValue = this.clearRange(clearedValue, selection.end, mask.length - selection.end);
+      clearedValue = this.insertRawSubstr(clearedValue, substr, 0);
+
+      if (!clearOnly) {
+        caretPosition = this.getFilledLength(clearedValue);
+      } else if (caretPosition < prefix.length) {
+        caretPosition = prefix.length;
+      }
+    }
+
+    value = this.formatValue(value);
+
+    this.setState({
+      value: this.hasValue ? this.state.value : value
+    });
+
+    this.setCaretPosition(caretPosition);
+  }
+
+  /**
+   * On focus sets the caret to the correct position.
+   * @param {object} event - Browser event
+   * @returns {undefined}
+   */
+  onFocus(event) {
+    this.input = event.target;
+    if (!this.state.value) {
+      const prefix = this.getPrefix();
+      let value = this.formatValue(prefix);
+      let inputValue = this.formatValue(value);
+
+      this.setState({
+        value: this.hasValue ? this.state.value : inputValue
+      }, this.setCaretToEnd);
+    } else if (this.getFilledLength() < this.mask.length) {
+      this.setCaretToEnd();
+    }
+
+  }
+
+  /**
+   * Test if character entered is allowed on the given position.
+   * @param {string} character - Character to check
+   * @param {integer} position - Position of the character.
+   * @param {boolean} allowMaskChar - Flag to check if mask char is allowed.
+   * @returns {boolean} true or false based on if it is allowed.
+   */
+  isAllowedChar(character, position, allowMaskChar = false) {
+    const {mask, maskCharacter} = this;
+    const ruleCharacter = mask[position];
+    const characterRule = this.props.formatCharacters[ruleCharacter];
+
+    if (this.isPermanentChar(position)) {
+      return ruleCharacter === character;
+    }
+
+    return (new RegExp(characterRule).test(character))
+      || (allowMaskChar && character === maskCharacter);
+  }
+
+  /**
+   * Return if the given position is a permanent character. Used to generate
+   * a prefix.
+   * @param {integer} position - given position.
+   * @returns {boolean} true or false if character is permanent.
+   */
+  isPermanentChar(position) {
+    return this.permanents.indexOf(position) !== -1;
+  }
+
+  /**
+   * Check whether the input field is completely filled.
+   * @param {string} value - Value to check if input is filled.
+   * @returns {boolean} true or false if input is filled.
+   */
+  isFilled(value = this.state.value) {
+    return this.getFilledLength(value) === this.mask.length;
+  }
+
+  /**
+   * Check if the input value is empty. This checks if given characters are
+   * permanent or given by user input.
+   * @param {string} value - input value
+   * @returns {boolean} true or false if field is empty.
+   */
+  isEmpty(value = this.state.value) {
+    return !value.split('').some((character, i) =>
+      !this.isPermanentChar(i) && this.isAllowedChar(character, i)
+    );
+  }
+
+  /**
+   * Clears a given range at a given start position and length in the value.
+   * @param {string} value - value to clear
+   * @param {integer} start - start value where to clear
+   * @param {integer} length - length of value to clear.
+   * @returns {string} new value.
+   */
+  clearRange(value, start, length) {
+    const end = start + length;
+    const {maskCharacter, mask} = this;
+
+    if (!maskCharacter) {
+      const prefix = this.getPrefix();
+
+      value = value.split('')
+        .filter((_, i) => i < prefix.length || i < start || i >= end)
+        .join('');
+      return this.formatValue(value);
+    }
+    return value.split('').map((c, i) => {
+      if (i < start || i >= end) {
+        return c;
+      }
+      if (this.isPermanentChar(i)) {
+        return mask[i];
+      }
+      return maskCharacter;
+    }).join('');
+  }
+
+  /**
+   * Formats the value based on the mask.
+   * @param {string} value - value to format.
+   * @returns {string} formatted value.
+   */
+  formatValue(value = '') {
+    const {maskCharacter, mask} = this;
+
+    if (!maskCharacter) {
+      const prefix = this.getPrefix();
+
+      value = this.insertRawSubstr('', value, 0);
+
+      let valueEnd = value.length - 1;
+
+      while (value.length > prefix.length && this.isPermanentChar(valueEnd)) {
+        value = value.slice(0, valueEnd);
+        valueEnd = value.length - 1;
+      }
+
+      if (value.length < prefix.length) {
+        value = prefix;
+      }
+      return value;
+    }
+
+    if (value) {
+      const emptyValue = this.formatValue();
+      return this.insertRawSubstr(emptyValue, value, 0);
+    }
+
+    return value.split('')
+      .concat(new Array(mask.length - value.length).fill(null))
+      .map((character, position) => {
+        if (this.isAllowedChar(character, position)) {
+          return character;
+        } else if (this.isPermanentChar(position)) {
+          return mask[position];
         }
+        return maskCharacter;
+      }).join('');
+  }
 
-        const selection = this.getSelection();
-        const prefix = this.getPrefix();
-        let caretPosition = selection.end;
-        let clearedValue;
+  /**
+   * Insert raw substring in the value and return the new value.
+   * Checks whether the cursor position does not compromise permanent
+   * characters.
+   * @param {string} value - value to be inserted into.
+   * @param {string} substr - Substring to insert into value.
+   * @param {integer} position - Position to insert to.
+   * @return {string} newly formatted value with inserted substring
+   */
+  insertRawSubstr(value, substr, position) {
+    const {mask, maskCharacter} = this;
+    const isFilled = this.isFilled(value);
+    const prefix = this.getPrefix();
+    substr = substr.split('');
 
-        if (value.length > oldValue.length) {
-            const substrLength = value.length - oldValue.length;
-            const startPosition = selection.end - substrLength;
-            const enteredSubstr = value.substr(startPosition, substrLength);
+    if (!maskCharacter && position > value.length) {
+      value += mask.slice(value.length, position);
+    }
 
-            if (startPosition < lastEditablePos &&
-                (substrLength !== 1 || enteredSubstr !== mask[startPosition])) {
-                caretPosition= this.getRightEditablePosition(startPosition);
+    for (let i = position; i < mask.length && substr.length;) {
+      const isPermanent = this.isPermanentChar(i);
+      if (!isPermanent || mask[i] === substr[0]) {
+        let character = substr.shift();
+        if (this.isAllowedChar(character, i, true)) {
+          if (i < value.length) {
+            if (maskCharacter || isFilled || i < prefix.length) {
+              value = Mask.replaceSubstr(value, character, i);
             } else {
-                caretPosition = startPosition;
+              value = this.formatValue(
+                value.substr(0, i) + character + value.substr(i)
+              );
             }
-
-            value = value.substr(0, startPosition) + value.substr(startPosition + substrLength);
-
-            clearedValue = this.clearRange(value, startPosition, mask.length - startPosition);
-            clearedValue = this.insertRawSubstr(clearedValue, enteredSubstr, caretPosition);
-
-            value = this.insertRawSubstr(oldValue, enteredSubstr, caretPosition);
-            if (substrLength !== 1 || (caretPosition >= prefix.length && caretPosition < lastEditablePos)) {
-                caretPosition = this.getFilledLength(clearedValue);
-            } else if (caretPosition < lastEditablePos) {
-                caretPosition++;
-            }
-        } else if (value.length < oldValue.length) {
-            const removedLength = mask.length - value.length;
-            clearedValue = this.clearRange(oldValue, selection.end, removedLength);
-            const substr = value.substr(0, selection.end);
-            const clearOnly = substr === oldValue.substr(0, selection.end);
-
-            if (maskCharacter) {
-                value = this.insertRawSubstr(clearedValue, substr, 0);
-            }
-
-            clearedValue = this.clearRange(clearedValue, selection.end, mask.length - selection.end);
-            clearedValue = this.insertRawSubstr(clearedValue, substr, 0);
-
-            if (!clearOnly) {
-                caretPosition = this.getFilledLength(clearedValue);
-            } else if (caretPosition < prefix.length) {
-                caretPosition = prefix.length;
-            }
+          } else if (!maskCharacter) {
+            value += character;
+          }
+          ++i;
         }
-
-        value = this.formatValue(value);
-
-        this.setState({
-            value: this.hasValue ? this.state.value : value
-        });
-
-        this.setCaretPosition(caretPosition);
-    }
-
-    onFocus(e) {
-        this.input = e.target;
-        if (!this.state.value) {
-            const prefix = this.getPrefix();
-            let value = this.formatValue(prefix);
-            let inputValue = this.formatValue(value);
-
-            this.setState({
-                value: this.hasValue ? this.state.value : inputValue
-            }, this.setCaretToEnd);
-        } else if (this.getFilledLength() < this.mask.length) {
-            this.setCaretToEnd();
+      } else {
+        if (!maskCharacter && i >= value.length) {
+          value += mask[i];
+        } else if (maskCharacter && isPermanent
+          && substr[0] === maskCharacter) {
+          substr.shift();
         }
-
+        ++i;
+      }
     }
+    return value;
+  }
 
-    /**
-     * Test if character entered is allowed on the given position.
-     * @param character
-     * @param position
-     * @param allowMaskChar
-     * @returns {boolean}
-     */
-    isAllowedChar(character, position, allowMaskChar = false) {
-        const { mask, maskCharacter } = this;
-        const ruleCharacter = mask[position];
-        const characterRule = this.props.formatCharacters[ruleCharacter];
+  /**
+   * Parse the rawMask and return an object containing the mask and all
+   * permanent positions.
+   * @param {string} rawMask - user given mask to be converted.
+   * @returns {{mask: string, permanents: Array, lastEditablePos: integer}}
+   *  returns object with mask, permanents and last editable position.
+   */
+  parseMask(rawMask) {
+    const permanents = []; // Keeps track of permanent position.
+    let isPermanent = false;
+    let mask = '';
+    let lastEditablePos = null;
 
-        if (this.isPermanentChar(position)) {
-            return ruleCharacter === character;
-        }
+    // Split mask on each character and define which is a permanent char.
+    rawMask.split('').forEach(c => {
+      isPermanent = !isPermanent && c === '\\';
 
-        return (new RegExp(characterRule).test(character))
-            || (allowMaskChar && character === maskCharacter);
+      if (isPermanent || !this.props.formatCharacters.hasOwnProperty(c)) {
+        permanents.push(mask.length)
+      } else {
+        lastEditablePos = mask.length + 1;
+      }
+      mask += c;
+    });
+    return {mask, permanents, lastEditablePos};
+  }
+
+  pasteText(value, text, selection, event) {
+    let caretPosition = selection.start;
+    if (selection.length) {
+      value = this.clearRange(value, caretPosition, selection.length);
     }
-
-    /**
-     * Return if the given index is a permanent character. Used to generate
-     * a prefix.
-     * @param index
-     * @returns {boolean}
-     */
-    isPermanentChar(index) {
-        return this.permanents.indexOf(index) !== -1;
+    let textLen = this.getRawSubstrLength(text, caretPosition);
+    value = this.insertRawSubstr(value, text, caretPosition);
+    caretPosition += textLen;
+    caretPosition = this.getRightEditablePosition(caretPosition)
+      || caretPosition;
+    if (value !== this.getInputValue()) {
+      if (event) {
+        this.setInputValue(value);
+      }
+      this.setState({
+        value: this.hasValue ? this.state.value : value
+      });
+      if (event && typeof this.props.onChange === 'function') {
+        this.props.onChange(event);
+      }
     }
+    this.setCaretPosition(caretPosition);
+  }
 
-    /**
-     * Check whether the input field is completely filled.
-     * @param value
-     * @returns {boolean}
-     */
-    isFilled(value = this.state.value) {
-        return this.getFilledLength(value) === this.mask.length;
+
+  render() {
+    const value = this.child.props.value;
+    const handlerKeys = ['onFocus', 'onBlur', 'onChange', 'onKeyDown',
+      'onKeyPress', 'onKeyUp', 'onPaste'];
+    const props = {value};
+    handlerKeys.forEach(k => {
+      props[k] = this[k];
+    });
+    if (props.value !== null && props.value !== undefined) {
+      props.value = this.state.value;
     }
+    props.onKeyUp = this.onKeyUp;
+    this.child = React.cloneElement(this.child, props);
 
-    /**
-     * Check if the input value is empty. This checks if given characters are
-     * permanent or given by user input.
-     * @param value
-     * @returns {boolean}
-     */
-    isEmpty(value = this.state.value) {
-        return !value.split('').some((character, i) =>
-            !this.isPermanentChar(i) && this.isAllowedChar(character, i)
-        );
-    }
-
-    clearRange(value, start, length) {
-        const end = start + length;
-        const { maskCharacter, mask} = this;
-
-        if (!maskCharacter) {
-            const prefix = this.getPrefix();
-
-            value = value.split('')
-                .filter((_, i) => i < prefix.length || i < start || i >= end)
-                .join('');
-            return this.formatValue(value);
-        }
-        return value.split('').map((c, i) => {
-            if (i < start || i >= end) {
-                return c;
-            }
-            if (this.isPermanentChar(i)) {
-                return mask[i];
-            }
-            return maskCharacter;
-        }).join('');
-    }
-
-    formatValue(value = '') {
-        const { maskCharacter, mask } = this;
-
-        if (!maskCharacter) {
-            const prefix = this.getPrefix();
-
-            value = this.insertRawSubstr('', value, 0);
-
-            let valueEnd = value.length - 1;
-
-            while (value.length > prefix.length && this.isPermanentChar(valueEnd)) {
-                value = value.slice(0, valueEnd);
-                valueEnd = value.length - 1;
-            }
-
-            if (value.length < prefix.length) {
-                value = prefix;
-            }
-            return value;
-        }
-
-        if (value) {
-            const emptyValue = this.formatValue();
-            return this.insertRawSubstr(emptyValue, value, 0);
-        }
-
-        return value.split('')
-            .concat(new Array(mask.length - value.length).fill(null))
-            .map((character, position) => {
-                if (this.isAllowedChar(character, position)) {
-                    return character;
-                } else if (this.isPermanentChar(position)) {
-                    return mask[position];
-                }
-                return maskCharacter;
-            }).join('');
-    }
-
-    /**
-     * Insert raw substring in the value and return the new value.
-     * Checks whether the cursor position does not compromise permanent
-     * characters.
-     * @param value
-     * @param substr
-     * @param position
-     * @return {String}
-     */
-    insertRawSubstr(value, substr, position) {
-        const { mask, maskCharacter } = this;
-        const isFilled = this.isFilled(value);
-        const prefix = this.getPrefix();
-        substr = substr.split('');
-
-        if (!maskCharacter && position > value.length) {
-            value += mask.slice(value.length, position);
-        }
-
-        for (let i = position; i < mask.length && substr.length;) {
-            const isPermanent = this.isPermanentChar(i);
-            if (!isPermanent || mask[i] === substr[0]) {
-                let character = substr.shift();
-                if (this.isAllowedChar(character, i, true)) {
-                    if (i < value.length) {
-                        if (maskCharacter || isFilled || i < prefix.length) {
-                            value = Mask.replaceSubstr(value, character, i);
-                        } else {
-                            value = this.formatValue(
-                                value.substr(0, i) + character + value.substr(i)
-                            );
-                        }
-                    } else if (!maskCharacter) {
-                        value += character;
-                    }
-                    ++i;
-                }
-            } else {
-                if (!maskCharacter && i >= value.length) {
-                    value += mask[i];
-                } else if (maskCharacter && isPermanent
-                    && substr[0] === maskCharacter) {
-                    substr.shift();
-                }
-                ++i;
-            }
-        }
-        return value;
-    }
-
-    /**
-     * Parse the rawMask and return an object containing the mask and all
-     * permanent positions.
-     * @param rawMask
-     * @returns {{mask: string, permanents: Array}}
-     */
-    parseMask(rawMask) {
-        const permanents = []; // Keeps track of permanent position.
-        let isPermanent = false;
-        let mask = '';
-        let lastEditablePos = null;
-
-        // Split mask on each character and define which is a permanent char.
-        rawMask.split('').forEach(c => {
-            isPermanent = !isPermanent && c === '\\';
-
-            if (isPermanent || !this.props.formatCharacters.hasOwnProperty(c)) {
-                permanents.push(mask.length)
-            } else {
-                lastEditablePos = mask.length + 1;
-            }
-            mask += c;
-        });
-        return {mask, permanents, lastEditablePos};
-    }
-
-    pasteText(value, text, selection, event) {
-        let caretPosition = selection.start;
-        if (selection.length) {
-            value = this.clearRange(value, caretPosition, selection.length);
-        }
-        let textLen = this.getRawSubstrLength(text, caretPosition);
-        value = this.insertRawSubstr(value, text, caretPosition);
-        caretPosition += textLen;
-        caretPosition = this.getRightEditablePosition(caretPosition) || caretPosition;
-        if (value !== this.getInputValue()) {
-            if (event) {
-                this.setInputValue(value);
-            }
-            this.setState({
-                value: this.hasValue ? this.state.value : value
-            });
-            if (event && typeof this.props.onChange === "function") {
-                this.props.onChange(event);
-            }
-        }
-        this.setCaretPosition(caretPosition);
-    }
-
-
-
-    render() {
-        const value = this.child.props.value;
-        const handlerKeys = ["onFocus", "onBlur", "onChange", "onKeyDown", "onKeyPress", "onKeyUp", "onPaste"];
-        const props = {value};
-        handlerKeys.forEach(k => {
-            props[k] = this[k];
-        });
-        if (props.value != null) {
-            props.value = this.state.value;
-        }
-        props.onKeyUp = this.onKeyUp;
-        this.child = React.cloneElement(this.child, props);
-
-        return (
-            <div className="masked">
-                {this.child}
-            </div>
-        );
-    }
+    return (
+      <div className='masked'>
+        {this.child}
+      </div>
+    );
+  }
 }
 
 /**
  * Set default prop types.
  */
 Mask.propTypes = {
-    children: React.PropTypes.object,
-    mask: React.PropTypes.string,
-    maskCharacter: React.PropTypes.string,
-    formatCharacters: React.PropTypes.object,
-    alwaysShowMask: React.PropTypes.bool,
-    i18n: React.PropTypes.string
+  children: React.PropTypes.object,
+  mask: React.PropTypes.string,
+  maskCharacter: React.PropTypes.string,
+  formatCharacters: React.PropTypes.object,
+  alwaysShowMask: React.PropTypes.bool,
+  i18n: React.PropTypes.string,
+  value: React.PropTypes.string,
+  onChange: React.PropTypes.func
 };
 
 /**
  * Default props for the component.
  */
 Mask.defaultProps = {
-    maskCharacter: "_",
-    formatCharacters: {
-        "9": "[0-9]",
-        "a": "^[A-Za-z]$",
-        "A": "^[A-Z]$",
-        "*": "[A-Za-z0-9]"
-    },
-    alwaysShowMask: true
+  maskCharacter: '_',
+  formatCharacters: {
+    '9': '[0-9]',
+    'a': '^[A-Za-z]$',
+    'A': '^[A-Z]$',
+    '*': '[A-Za-z0-9]'
+  },
+  alwaysShowMask: true
 };
 
 export default Mask;
