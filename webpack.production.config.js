@@ -32,7 +32,6 @@ module.exports = {
     new webpack.optimize.AggressiveMergingPlugin(),
   ],
   externals: {
-    'react': 'react',
-    'react-dom' : 'reactDOM'
+    'react': 'React'
   }
 };
