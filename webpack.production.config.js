@@ -11,7 +11,11 @@ module.exports = {
     filename: 'react-masking.js'
   },
   resolve: {
-    extensions: ['', '.js', '.jsx']
+    extensions: ['', '.js', '.jsx'],
+    modulesDirectories: ['web_modules', 'node_modules'],
+    alias: {
+      react: path.resolve(path.join(path.resolve(__dirname), 'node_modules', 'react')),
+    }
   },
   module: {
     loaders
@@ -24,15 +28,22 @@ module.exports = {
     }),
     new webpack.NoErrorsPlugin(),
     new webpack.optimize.DedupePlugin(),
-    // new webpack.optimize.UglifyJsPlugin({
-    //   compress:{
-    //     warnings: true
-    //   }
-    // }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress:{
+        warnings: false,
+        sequences: true,
+        dead_code: true,
+        conditionals: true,
+        booleans: true,
+        unused: true,
+        if_return: true,
+        join_vars: true,
+        drop_console: false,
+      },
+      mangle: {
+        except: ['require', 'export', '$super'],
+      },
+    }),
     new webpack.optimize.AggressiveMergingPlugin(),
-  ],
-  externals: {
-    'react': 'React',
-    'react-dom': 'ReactDOM'
-  }
+  ]
 };
