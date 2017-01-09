@@ -1,6 +1,6 @@
 {
   "name": "react-masking",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React Masking component meant to be used with Inputs, made especially with packages like React Validation in mind.",
   "repository": {
     "type": "git",
