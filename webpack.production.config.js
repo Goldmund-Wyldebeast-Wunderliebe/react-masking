@@ -24,11 +24,11 @@ module.exports = {
     }),
     new webpack.NoErrorsPlugin(),
     new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      compress:{
-        warnings: true
-      }
-    }),
+    // new webpack.optimize.UglifyJsPlugin({
+    //   compress:{
+    //     warnings: true
+    //   }
+    // }),
     new webpack.optimize.AggressiveMergingPlugin(),
   ],
   externals: {
