@@ -12,19 +12,18 @@ class Mask extends React.Component {
   constructor(props) {
     super(props);
 
-    this.hasValue = !!this.props.value;
-
     const child = this.child = React.Children.only(this.props.children);
-
-    const maskObj = this.parseMask(this.props.mask);
-
     let value = this.props.value || child.props.value;
 
+    this.hasValue = !!this.props.value;
+
+    const maskObj = this.parseMask(this.props.mask);
     this.mask = maskObj.mask;
     this.permanents = maskObj.permanents;
     this.lastEditablePos = maskObj.lastEditablePos;
-    this.maskCharacter = this.props.maskCharacter;
 
+    // Set mask character or load default from props.
+    this.maskCharacter = this.props.maskCharacter;
 
     if (this.mask && (this.props.alwaysShowMask || value)) {
       value = this.formatValue(value);
@@ -32,6 +31,8 @@ class Mask extends React.Component {
 
     this.state = {child, value};
 
+    // All Events. This ensures all actions on the input field are logical to
+    // the browser AND user.
     this.onPaste = this.onPaste.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -40,6 +41,7 @@ class Mask extends React.Component {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
+    this.onCopy = this.onCopy.bind(this);
   }
 
   /**
@@ -271,7 +273,7 @@ class Mask extends React.Component {
   /**
    * Returns the length of the substring.
    * @param {string} substr - Substring
-   * @param {position} position - Position of substring
+   * @param {number} position - Position of substring
    * @returns {number} substrLength - Length of substring
    */
   getRawSubstrLength(substr, position) {
@@ -295,7 +297,7 @@ class Mask extends React.Component {
   /**
    * Dub function that is in progress. No value descriptor is made so it will
    * use the input given by an event.
-   * @returns {number} value.
+   * @returns {string} value.
    */
   getInputValue() {
     const input = this.input;
@@ -330,7 +332,6 @@ class Mask extends React.Component {
   componentDidMount() {
     this.isAndroidBrowser = Mask.isAndroidBrowser();
     this.isWindowsPhoneBrowser = Mask.isWindowsPhoneBrowser();
-    this.isAndroidFirefox = Mask.isAndroidBrowser(true);
   }
 
   /**
@@ -363,6 +364,18 @@ class Mask extends React.Component {
   }
 
   /**
+   * On Copy event, this makes sure that NO masking characters will be copied.
+   * @param {object} event - Browser event.
+   * @returns {undefined}
+   */
+  onCopy(event) {
+    let value = this.getInputValue();
+    value = value.substr(0, this.getFilledLength());
+    event.clipboardData.setData('text/plain', value);
+    event.preventDefault();
+  }
+
+  /**
    * Handles delete and backspace actions onKeyDown. Also triggers bound
    * actions on the Mask.
    * @param {object} event - Browser event.
@@ -371,7 +384,7 @@ class Mask extends React.Component {
   onKeyDown(event) {
     this.input = event.target;
     const key = event.key;
-    let {value} = this.state;
+    let value = event.target.value;
     let preventDefault = false;
     let caretPosition = this.getCaretPosition();
 
@@ -500,6 +513,68 @@ class Mask extends React.Component {
     }
   }
 
+  getClearedValue(value, substr, startPosition, endPosition, caretPosition) {
+    const clearedValue = this.clearRange(value, startPosition, endPosition);
+    return this.insertRawSubstr(clearedValue, substr, caretPosition);
+  }
+
+  formatEnteredSubstr(inputValue, oldValue) {
+    const {lastEditablePos, mask} = this;
+    const substrLength = inputValue.length - oldValue.length;
+    const selection = this.getSelection();
+    const startPosition = selection.end - substrLength;
+    const endPosition = mask.length - startPosition;
+    const enteredSubstr = inputValue.substr(startPosition, substrLength);
+    const prefix = this.getPrefix();
+    let caretPosition = selection.end;
+    let clearedValue;
+
+    if (startPosition < lastEditablePos &&
+      (substrLength !== 1 || enteredSubstr !== mask[startPosition])) {
+      caretPosition = this.getRightEditablePosition(startPosition);
+    } else {
+      caretPosition = startPosition;
+    }
+
+    inputValue = inputValue.substr(0, startPosition) +
+      inputValue.substr(startPosition + substrLength);
+
+    if (substrLength !== 1 ||
+      (caretPosition >= prefix.length && caretPosition < lastEditablePos)) {
+      clearedValue = this.getClearedValue(
+        inputValue, enteredSubstr, startPosition, endPosition, caretPosition
+      );
+      caretPosition = this.getFilledLength(clearedValue);
+    } else if (caretPosition < lastEditablePos) {
+      caretPosition++;
+    }
+    return {inputValue, caretPosition};
+  }
+
+  formatRemovedSubstr(inputValue, oldValue) {
+    const {mask, maskCharacter} = this;
+    const selection = this.getSelection();
+    const prefix = this.getPrefix();
+    const removedLength = mask.length - inputValue.length;
+    const substr = inputValue.substr(0, selection.end);
+    const clearOnly = substr === oldValue.substr(0, selection.end);
+    let clearedValue = this.clearRange(oldValue, selection.end, removedLength);
+    let caretPosition = selection.end;
+
+    if (maskCharacter) {
+      inputValue = this.insertRawSubstr(clearedValue, substr, 0);
+    }
+
+    if (!clearOnly) {
+      clearedValue = this.getClearedValue(
+        clearedValue, substr, selection.end, mask.length - selection.end, 0);
+      caretPosition = this.getFilledLength(clearedValue);
+    } else if (caretPosition < prefix.length) {
+      caretPosition = prefix.length;
+    }
+    return {inputValue, caretPosition};
+  }
+
   /**
    * On Change event. This is the main event listener that makes sure all
    * masking changes will be set correctly.
@@ -507,69 +582,33 @@ class Mask extends React.Component {
    * @returns {undefined}
    */
   onChange(event) {
+    // Set input on change event. This ensures we have the right scope.
     this.input = event.target;
-    const {pasteSelection, mask, maskCharacter, lastEditablePos} = this;
-    let value = this.input.value;
-    let oldValue = this.state.value;
+    const {pasteSelection} = this;
+    const oldValue = this.state.value;
+    let inputValue = this.input.value;
 
+    // Ensure that when text has been pasted, the rest of the onChange function
+    // does not trigger.
     if (pasteSelection) {
       this.pasteSelection = null;
-      this.pasteText(oldValue, value, pasteSelection, event);
+      this.pasteText(oldValue, inputValue, pasteSelection, event);
       return;
     }
+    let formattedStr, caretPosition;
 
-    const selection = this.getSelection();
-    const prefix = this.getPrefix();
-    let caretPosition = selection.end;
-    let clearedValue;
-
-    if (value.length > oldValue.length) {
-      const substrLength = value.length - oldValue.length;
-      const startPosition = selection.end - substrLength;
-      const enteredSubstr = value.substr(startPosition, substrLength);
-
-      if (startPosition < lastEditablePos &&
-        (substrLength !== 1 || enteredSubstr !== mask[startPosition])) {
-        caretPosition = this.getRightEditablePosition(startPosition);
-      } else {
-        caretPosition = startPosition;
-      }
-
-      value = value.substr(0, startPosition) + value.substr(startPosition + substrLength);
-
-      clearedValue = this.clearRange(value, startPosition, mask.length - startPosition);
-      clearedValue = this.insertRawSubstr(clearedValue, enteredSubstr, caretPosition);
-
-      value = this.insertRawSubstr(oldValue, enteredSubstr, caretPosition);
-      if (substrLength !== 1 || (caretPosition >= prefix.length && caretPosition < lastEditablePos)) {
-        caretPosition = this.getFilledLength(clearedValue);
-      } else if (caretPosition < lastEditablePos) {
-        caretPosition++;
-      }
-    } else if (value.length < oldValue.length) {
-      const removedLength = mask.length - value.length;
-      clearedValue = this.clearRange(oldValue, selection.end, removedLength);
-      const substr = value.substr(0, selection.end);
-      const clearOnly = substr === oldValue.substr(0, selection.end);
-
-      if (maskCharacter) {
-        value = this.insertRawSubstr(clearedValue, substr, 0);
-      }
-
-      clearedValue = this.clearRange(clearedValue, selection.end, mask.length - selection.end);
-      clearedValue = this.insertRawSubstr(clearedValue, substr, 0);
-
-      if (!clearOnly) {
-        caretPosition = this.getFilledLength(clearedValue);
-      } else if (caretPosition < prefix.length) {
-        caretPosition = prefix.length;
-      }
+    if (inputValue.length > oldValue.length) {
+      formattedStr = this.formatEnteredSubstr(inputValue, oldValue);
+    } else if (inputValue.length < oldValue.length) {
+      formattedStr = this.formatRemovedSubstr(inputValue, oldValue);
     }
+    inputValue = formattedStr.inputValue;
+    caretPosition = formattedStr.caretPosition;
 
-    value = this.formatValue(value);
+    inputValue = this.formatValue(inputValue);
 
     this.setState({
-      value: this.hasValue ? this.state.value : value
+      value: this.hasValue ? this.state.value : inputValue
     });
 
     this.setCaretPosition(caretPosition);
@@ -599,7 +638,7 @@ class Mask extends React.Component {
   /**
    * Test if character entered is allowed on the given position.
    * @param {string} character - Character to check
-   * @param {integer} position - Position of the character.
+   * @param {number} position - Position of the character.
    * @param {boolean} allowMaskChar - Flag to check if mask char is allowed.
    * @returns {boolean} true or false based on if it is allowed.
    */
@@ -619,7 +658,7 @@ class Mask extends React.Component {
   /**
    * Return if the given position is a permanent character. Used to generate
    * a prefix.
-   * @param {integer} position - given position.
+   * @param {number} position - given position.
    * @returns {boolean} true or false if character is permanent.
    */
   isPermanentChar(position) {
@@ -650,8 +689,8 @@ class Mask extends React.Component {
   /**
    * Clears a given range at a given start position and length in the value.
    * @param {string} value - value to clear
-   * @param {integer} start - start value where to clear
-   * @param {integer} length - length of value to clear.
+   * @param {number} start - start value where to clear
+   * @param {number} length - length of value to clear.
    * @returns {string} new value.
    */
   clearRange(value, start, length) {
@@ -726,7 +765,7 @@ class Mask extends React.Component {
    * characters.
    * @param {string} value - value to be inserted into.
    * @param {string} substr - Substring to insert into value.
-   * @param {integer} position - Position to insert to.
+   * @param {number} position - Position to insert to.
    * @return {string} newly formatted value with inserted substring
    */
   insertRawSubstr(value, substr, position) {
@@ -825,7 +864,7 @@ class Mask extends React.Component {
   render() {
     const value = this.child.props.value;
     const handlerKeys = ['onFocus', 'onBlur', 'onChange', 'onKeyDown',
-      'onKeyPress', 'onKeyUp', 'onPaste'];
+      'onKeyPress', 'onKeyUp', 'onPaste', 'onCopy'];
     const props = {value};
     handlerKeys.forEach(k => {
       props[k] = this[k];

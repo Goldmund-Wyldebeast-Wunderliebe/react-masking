@@ -14,6 +14,11 @@ module.exports = [
 		  plugins: ['transform-runtime', 'transform-decorators-legacy', 'transform-class-properties'],
 		}
 	},
+  {
+    test: /\.jsx?$/,
+    exclude: /(node_modules|bower_components|public)/,
+    loader: 'eslint-loader'
+  },
 	{
 		test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
 		exclude: /(node_modules|bower_components)/,
