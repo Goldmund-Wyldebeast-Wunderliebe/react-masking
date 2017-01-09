@@ -27,7 +27,6 @@ module.exports = {
       }
     }),
     new webpack.NoErrorsPlugin(),
-    new webpack.optimize.DedupePlugin(),
     new webpack.optimize.UglifyJsPlugin({
       compress:{
         warnings: false,
@@ -45,5 +44,6 @@ module.exports = {
       },
     }),
     new webpack.optimize.AggressiveMergingPlugin(),
+    new webpack.optimize.DedupePlugin(),
   ]
 };

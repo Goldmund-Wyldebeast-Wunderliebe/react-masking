@@ -43,9 +43,5 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './examples/template.html'
     })
-  ],
-  externals: {
-    'react': 'react',
-    'react-dom': 'ReactDOM'
-  }
+  ]
 };
