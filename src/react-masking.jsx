@@ -512,7 +512,7 @@ class Mask extends React.Component {
       });
     }
 
-    if (typeof this.props.onBlur === "function") {
+    if (typeof this.props.onBlur === 'function') {
       this.props.onBlur(event);
     }
   }
@@ -615,7 +615,7 @@ class Mask extends React.Component {
       value: this.hasValue ? this.state.value : inputValue
     });
 
-    if (typeof this.props.onChange === "function") {
+    if (typeof this.props.onChange === 'function') {
       this.props.onChange(event);
     }
 
@@ -640,7 +640,7 @@ class Mask extends React.Component {
     } else if (this.getFilledLength() < this.mask.length) {
       this.setCaretToEnd();
     }
-    if (typeof this.props.onFocus === "function") {
+    if (typeof this.props.onFocus === 'function') {
       this.props.onFocus(event);
     }
   }
@@ -906,7 +906,7 @@ Mask.propTypes = {
   value: React.PropTypes.string,
   onChange: React.PropTypes.func,
   onBlur: React.PropTypes.func,
-  onFocus: React.PropTypes.func,
+  onFocus: React.PropTypes.func
 };
 
 /**
