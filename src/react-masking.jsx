@@ -36,7 +36,6 @@ class Mask extends React.Component {
     this.onPaste = this.onPaste.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onChange = this.onChange.bind(this);
-    this.onChange = this.onChange.bind(this);
     this.onFocus = this.onFocus.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
@@ -497,9 +496,10 @@ class Mask extends React.Component {
   /**
    * On Blur event for the input field. Makes sure the correct state has been
    * set.
+   * @param {object} event - Browser event
    * @returns {undefined}
    */
-  onBlur() {
+  onBlur(event) {
     if (!this.props.alwaysShowMask && this.isEmpty()) {
       let inputValue = '';
       const isInputValueChanged = inputValue !== this.getInputValue();
@@ -510,6 +510,10 @@ class Mask extends React.Component {
       this.setState({
         value: this.hasValue ? this.state.value : ''
       });
+    }
+
+    if (typeof this.props.onBlur === "function") {
+      this.props.onBlur(event);
     }
   }
 
@@ -611,6 +615,10 @@ class Mask extends React.Component {
       value: this.hasValue ? this.state.value : inputValue
     });
 
+    if (typeof this.props.onChange === "function") {
+      this.props.onChange(event);
+    }
+
     this.setCaretPosition(caretPosition);
   }
 
@@ -632,7 +640,9 @@ class Mask extends React.Component {
     } else if (this.getFilledLength() < this.mask.length) {
       this.setCaretToEnd();
     }
-
+    if (typeof this.props.onFocus === "function") {
+      this.props.onFocus(event);
+    }
   }
 
   /**
@@ -894,7 +904,9 @@ Mask.propTypes = {
   alwaysShowMask: React.PropTypes.bool,
   i18n: React.PropTypes.string,
   value: React.PropTypes.string,
-  onChange: React.PropTypes.func
+  onChange: React.PropTypes.func,
+  onBlur: React.PropTypes.func,
+  onFocus: React.PropTypes.func,
 };
 
 /**
