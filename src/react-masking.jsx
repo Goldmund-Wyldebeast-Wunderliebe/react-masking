@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * React masking component.
  */
-class Mask extends React.Component {
+export default class Mask extends React.Component {
   /**
    * Constructor for Masking component. Sets all values needed for the rest of
    * the component and binds all needed actions.
@@ -910,5 +910,3 @@ Mask.defaultProps = {
   },
   alwaysShowMask: true
 };
-
-export default Mask;

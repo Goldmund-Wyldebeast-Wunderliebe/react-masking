@@ -1,2 +1,1149 @@
-!function(t){function e(r){if(n[r])return n[r].exports;var i=n[r]={exports:{},id:r,loaded:!1};return t[r].call(i.exports,i,i.exports,e),i.loaded=!0,i.exports}var n={};return e.m=t,e.c=n,e.p="",e(0)}([function(t,e,n){"use strict";function r(t){return t&&t.__esModule?t:{default:t}}function i(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}function o(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}function a(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}Object.defineProperty(e,"__esModule",{value:!0});var s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},u=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),l=n(1),c=r(l),f=function(t){function e(t){i(this,e);var n=o(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,t)),r=n.child=c.default.Children.only(n.props.children),a=n.props.value||r.props.value;n.hasValue=!!n.props.value;var s=n.parseMask(n.props.mask);return n.mask=s.mask,n.permanents=s.permanents,n.lastEditablePos=s.lastEditablePos,n.maskCharacter=n.props.maskCharacter,n.mask&&(n.props.alwaysShowMask||a)&&(a=n.formatValue(a)),n.state={child:r,value:a},n.onPaste=n.onPaste.bind(n),n.onBlur=n.onBlur.bind(n),n.onChange=n.onChange.bind(n),n.onChange=n.onChange.bind(n),n.onFocus=n.onFocus.bind(n),n.onKeyDown=n.onKeyDown.bind(n),n.onKeyPress=n.onKeyPress.bind(n),n.onKeyUp=n.onKeyUp.bind(n),n.onCopy=n.onCopy.bind(n),n}return a(e,t),u(e,[{key:"setInputValue",value:function(t){var e=this.input;e.value=t}},{key:"setCaretToEnd",value:function(){var t=this.getFilledLength(),e=this.getRightEditablePosition(t);null!==e&&this.setCaretPosition(e)}},{key:"setCaretPosition",value:function(t){var n=e.requestAnimationFrame(),r=this.setSelection.bind(this,t,0);r(),n(r)}},{key:"getCaretPosition",value:function(){return this.getSelection().start}},{key:"setSelection",value:function(t){var e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0,n=this.input,r=t+e,i=0;"selectionStart"in n&&"selectionEnd"in n?(n.selectionStart=t,n.selectionEnd=r):(i=n.createTextRange(),i.collapse(!0),i.moveStart("character",t),i.moveEnd("character",r-t),i.select())}},{key:"getSelection",value:function(){var t=this.input,e=0,n=0;if("selectionStart"in t&&"selectionEnd"in t)e=t.selectionStart,n=t.selectionEnd;else{var r=document.selection.createRange();r.parentElement()===t&&(e=-r.moveStart("character",-t.value.length),n=-r.moveEnd("character",-t.value.length))}var i=n-e;return{start:e,end:n,length:i}}},{key:"getPrefix",value:function(){for(var t=this.mask,e="",n=0;n<t.length&&this.isPermanentChar(n);++n)e+=t[n];return e}},{key:"getEditablePosition",value:function(t){for(var e=this.mask,n=t;n<e.length;n++)if(!this.isPermanentChar(n))return n;return null}},{key:"getLeftEditablePosition",value:function(t){for(var e=t;e>=0;--e)if(!this.isPermanentChar(e))return e;return null}},{key:"getRightEditablePosition",value:function(t){for(var e=this.mask,n=t;n<e.length;++n)if(!this.isPermanentChar(n))return n;return null}},{key:"getFilledLength",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:this.state.value,e=void 0,n=void 0,r=this.maskCharacter;if(!r)return t.length;for(n=t.length-1;n>=0&&(e=t[n],this.isPermanentChar(n)||!this.isAllowedChar(e,n));--n);return++n||this.getPrefix().length}},{key:"getRawSubstrLength",value:function(t,e){for(var n=void 0,r=this.mask,i=e,o=t.split("");i<r.length&&o.length;)this.isPermanentChar(i)&&r[i]!==o[0]?++i:(n=o.shift(),this.isAllowedChar(n,i,!0)&&++i);return i-e}},{key:"getInputValue",value:function(){var t=this.input,e=this.valueDescriptor,n=void 0;return n=e?e.get.call(t):t.value}},{key:"componentWillMount",value:function(){var t=this.mask,e=this.state.value;t&&e&&this.setState({value:e})}},{key:"componentDidMount",value:function(){this.isAndroidBrowser=e.isAndroidBrowser(),this.isWindowsPhoneBrowser=e.isWindowsPhoneBrowser()}},{key:"onPaste",value:function(t){if(this.isAndroidBrowser)return this.pasteSelection=this.getSelection(),void this.setInputValue("");var e=void 0;if(window.clipboardData&&window.clipboardData.getData?e=window.clipboardData.getData("Text"):t.clipboardData&&t.clipboardData.getData&&(e=t.clipboardData.getData("text/plain")),e){var n=this.state.value,r=this.getSelection();this.pasteText(n,e,r,t)}t.preventDefault()}},{key:"onCopy",value:function(t){var e=this.getInputValue();e=e.substr(0,this.getFilledLength()),t.clipboardData.setData("text/plain",e),t.preventDefault()}},{key:"onKeyDown",value:function(t){this.input=t.target;var e=t.key,n=t.target.value,r=!1,i=this.getCaretPosition();switch(e){case"Backspace":case"Delete":var o=this.getPrefix(),a="Delete"===e,s=this.getSelection();if(s.length)n=this.clearRange(n,s.start,s.length);else if(i<o.length||!a&&i===o.length)i=o.length;else{var u=a?this.getRightEditablePosition(i):this.getLeftEditablePosition(i-1);null!==u&&(n=this.clearRange(n,u,1),i=u)}}n!==this.state.value&&(this.setInputValue(n),this.setState({value:this.hasValue?this.state.value:n}),r=!0),r&&(t.preventDefault(),this.setCaretPosition(i))}},{key:"onKeyPress",value:function(t){var e=t.key;if(this.input=t.target,"Enter"!==e&&!t.ctrlKey&&!t.metaKey&&!this.isWindowsPhoneBrowser){var n=this.getCaretPosition(),r=this.state.value,i=this.mask,o=this.lastEditablePos,a=this.getPrefix(),s=this.getSelection();if(this.isPermanentChar(n)&&i[n]===e)r=this.insertRawSubstr(r,e,n),++n;else{var u=this.getRightEditablePosition(n);null!==u&&this.isAllowedChar(e,u)&&(r=this.clearRange(r,s.start,s.length),r=this.insertRawSubstr(r,e,u),n=u+1)}r!==this.state.value&&(this.setInputValue(r),this.setState({value:this.hasValue?this.state.value:r})),t.preventDefault(),n<o&&n>a.length&&(n=this.getRightEditablePosition(n)),this.setCaretPosition(n)}}},{key:"onKeyUp",value:function(t){this.setState({value:t.target.value})}},{key:"onBlur",value:function(){if(!this.props.alwaysShowMask&&this.isEmpty()){var t="",e=t!==this.getInputValue();e&&this.setInputValue(t),this.setState({value:this.hasValue?this.state.value:""})}}},{key:"getClearedValue",value:function(t,e,n,r,i){var o=this.clearRange(t,n,r);return this.insertRawSubstr(o,e,i)}},{key:"formatEnteredSubstr",value:function(t,e){var n=this.lastEditablePos,r=this.mask,i=t.length-e.length,o=this.getSelection(),a=o.end-i,s=r.length-a,u=t.substr(a,i),l=this.getPrefix(),c=o.end,f=void 0;return c=a<n&&(1!==i||u!==r[a])?this.getRightEditablePosition(a):a,t=t.substr(0,a)+t.substr(a+i),1!==i||c>=l.length&&c<n?(f=this.getClearedValue(t,u,a,s,c),c=this.getFilledLength(f)):c<n&&c++,{inputValue:t,caretPosition:c}}},{key:"formatRemovedSubstr",value:function(t,e){var n=this.mask,r=this.maskCharacter,i=this.getSelection(),o=this.getPrefix(),a=n.length-t.length,s=t.substr(0,i.end),u=s===e.substr(0,i.end),l=this.clearRange(e,i.end,a),c=i.end;return r&&(t=this.insertRawSubstr(l,s,0)),u?c<o.length&&(c=o.length):(l=this.getClearedValue(l,s,i.end,n.length-i.end,0),c=this.getFilledLength(l)),{inputValue:t,caretPosition:c}}},{key:"onChange",value:function(t){this.input=t.target;var e=this.pasteSelection,n=this.state.value,r=this.input.value;if(e)return this.pasteSelection=null,void this.pasteText(n,r,e,t);var i=void 0,o=void 0;r.length>n.length?i=this.formatEnteredSubstr(r,n):r.length<n.length&&(i=this.formatRemovedSubstr(r,n)),r=i.inputValue,o=i.caretPosition,r=this.formatValue(r),this.setState({value:this.hasValue?this.state.value:r}),this.setCaretPosition(o)}},{key:"onFocus",value:function(t){if(this.input=t.target,this.state.value)this.getFilledLength()<this.mask.length&&this.setCaretToEnd();else{var e=this.getPrefix(),n=this.formatValue(e),r=this.formatValue(n);this.setState({value:this.hasValue?this.state.value:r},this.setCaretToEnd)}}},{key:"isAllowedChar",value:function(t,e){var n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],r=this.mask,i=this.maskCharacter,o=r[e],a=this.props.formatCharacters[o];return this.isPermanentChar(e)?o===t:new RegExp(a).test(t)||n&&t===i}},{key:"isPermanentChar",value:function(t){return this.permanents.indexOf(t)!==-1}},{key:"isFilled",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:this.state.value;return this.getFilledLength(t)===this.mask.length}},{key:"isEmpty",value:function(){var t=this,e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:this.state.value;return!e.split("").some(function(e,n){return!t.isPermanentChar(n)&&t.isAllowedChar(e,n)})}},{key:"clearRange",value:function(t,e,n){var r=this,i=e+n,o=this.maskCharacter,a=this.mask;if(!o){var u=function(){var n=r.getPrefix();return t=t.split("").filter(function(t,r){return r<n.length||r<e||r>=i}).join(""),{v:r.formatValue(t)}}();if("object"===("undefined"==typeof u?"undefined":s(u)))return u.v}return t.split("").map(function(t,n){return n<e||n>=i?t:r.isPermanentChar(n)?a[n]:o}).join("")}},{key:"formatValue",value:function(){var t=this,e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:"",n=this.maskCharacter,r=this.mask;if(!n){var i=this.getPrefix();e=this.insertRawSubstr("",e,0);for(var o=e.length-1;e.length>i.length&&this.isPermanentChar(o);)e=e.slice(0,o),o=e.length-1;return e.length<i.length&&(e=i),e}if(e){var a=this.formatValue();return this.insertRawSubstr(a,e,0)}return e.split("").concat(new Array(r.length-e.length).fill(null)).map(function(e,i){return t.isAllowedChar(e,i)?e:t.isPermanentChar(i)?r[i]:n}).join("")}},{key:"insertRawSubstr",value:function(t,n,r){var i=this.mask,o=this.maskCharacter,a=this.isFilled(t),s=this.getPrefix();n=n.split(""),!o&&r>t.length&&(t+=i.slice(t.length,r));for(var u=r;u<i.length&&n.length;){var l=this.isPermanentChar(u);if(l&&i[u]!==n[0])!o&&u>=t.length?t+=i[u]:o&&l&&n[0]===o&&n.shift(),++u;else{var c=n.shift();this.isAllowedChar(c,u,!0)&&(u<t.length?t=o||a||u<s.length?e.replaceSubstr(t,c,u):this.formatValue(t.substr(0,u)+c+t.substr(u)):o||(t+=c),++u)}}return t}},{key:"parseMask",value:function(t){var e=this,n=[],r=!1,i="",o=null;return t.split("").forEach(function(t){r=!r&&"\\"===t,r||!e.props.formatCharacters.hasOwnProperty(t)?n.push(i.length):o=i.length+1,i+=t}),{mask:i,permanents:n,lastEditablePos:o}}},{key:"pasteText",value:function(t,e,n,r){var i=n.start;n.length&&(t=this.clearRange(t,i,n.length));var o=this.getRawSubstrLength(e,i);t=this.insertRawSubstr(t,e,i),i+=o,i=this.getRightEditablePosition(i)||i,t!==this.getInputValue()&&(r&&this.setInputValue(t),this.setState({value:this.hasValue?this.state.value:t}),r&&"function"==typeof this.props.onChange&&this.props.onChange(r)),this.setCaretPosition(i)}},{key:"render",value:function(){var t=this,e=this.child.props.value,n=["onFocus","onBlur","onChange","onKeyDown","onKeyPress","onKeyUp","onPaste","onCopy"],r={value:e};return n.forEach(function(e){r[e]=t[e]}),null!==r.value&&void 0!==r.value&&(r.value=this.state.value),r.onKeyUp=this.onKeyUp,this.child=c.default.cloneElement(this.child,r),c.default.createElement("div",{className:"masked"},this.child)}}],[{key:"replaceSubstr",value:function(t,e,n){return t.slice(0,n)+e+t.slice(n+e.length)}},{key:"isAndroidBrowser",value:function(){var t=arguments.length>0&&void 0!==arguments[0]&&arguments[0],e=new RegExp("windows","i"),n=new RegExp("firefox","i"),r=new RegExp("android","i"),i=navigator.userAgent;return!e.test(i)&&t===n.test(i)&&r.test(i)}},{key:"isWindowsPhoneBrowser",value:function(){var t=new RegExp("windows","i"),e=new RegExp("phone","i"),n=navigator.userAgent;return t.test(n)&&e.test(n)}},{key:"requestAnimationFrame",value:function(){return window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(t){return setTimeout(t,0)}}}]),e}(c.default.Component);f.propTypes={children:c.default.PropTypes.object,mask:c.default.PropTypes.string,maskCharacter:c.default.PropTypes.string,formatCharacters:c.default.PropTypes.object,alwaysShowMask:c.default.PropTypes.bool,i18n:c.default.PropTypes.string,value:c.default.PropTypes.string,onChange:c.default.PropTypes.func},f.defaultProps={maskCharacter:"_",formatCharacters:{9:"[0-9]",a:"^[A-Za-z]$",A:"^[A-Z]$","*":"[A-Za-z0-9]"},alwaysShowMask:!0},e.default=f},function(t,e,n){"use strict";t.exports=n(2)},function(t,e,n){"use strict";var r=n(3),i=n(4),o=n(17),a=n(20),s=n(21),u=n(23),l=n(8),c=n(24),f=n(26),p=n(27),h=(n(10),l.createElement),d=l.createFactory,v=l.cloneElement,y=r,g={Children:{map:i.map,forEach:i.forEach,count:i.count,toArray:i.toArray,only:p},Component:o,PureComponent:a,createElement:h,cloneElement:v,isValidElement:l.isValidElement,PropTypes:c,createClass:s.createClass,createFactory:d,createMixin:function(t){return t},DOM:u,version:f,__spread:y};t.exports=g},function(t,e){"use strict";function n(t){if(null===t||void 0===t)throw new TypeError("Object.assign cannot be called with null or undefined");return Object(t)}function r(){try{if(!Object.assign)return!1;var t=new String("abc");if(t[5]="de","5"===Object.getOwnPropertyNames(t)[0])return!1;for(var e={},n=0;n<10;n++)e["_"+String.fromCharCode(n)]=n;var r=Object.getOwnPropertyNames(e).map(function(t){return e[t]});if("0123456789"!==r.join(""))return!1;var i={};return"abcdefghijklmnopqrst".split("").forEach(function(t){i[t]=t}),"abcdefghijklmnopqrst"===Object.keys(Object.assign({},i)).join("")}catch(t){return!1}}var i=Object.prototype.hasOwnProperty,o=Object.prototype.propertyIsEnumerable;t.exports=r()?Object.assign:function(t,e){for(var r,a,s=n(t),u=1;u<arguments.length;u++){r=Object(arguments[u]);for(var l in r)i.call(r,l)&&(s[l]=r[l]);if(Object.getOwnPropertySymbols){a=Object.getOwnPropertySymbols(r);for(var c=0;c<a.length;c++)o.call(r,a[c])&&(s[a[c]]=r[a[c]])}}return s}},function(t,e,n){"use strict";function r(t){return(""+t).replace(P,"$&/")}function i(t,e){this.func=t,this.context=e,this.count=0}function o(t,e,n){var r=t.func,i=t.context;r.call(i,e,t.count++)}function a(t,e,n){if(null==t)return t;var r=i.getPooled(e,n);g(t,o,r),i.release(r)}function s(t,e,n,r){this.result=t,this.keyPrefix=e,this.func=n,this.context=r,this.count=0}function u(t,e,n){var i=t.result,o=t.keyPrefix,a=t.func,s=t.context,u=a.call(s,e,t.count++);Array.isArray(u)?l(u,i,n,y.thatReturnsArgument):null!=u&&(v.isValidElement(u)&&(u=v.cloneAndReplaceKey(u,o+(!u.key||e&&e.key===u.key?"":r(u.key)+"/")+n)),i.push(u))}function l(t,e,n,i,o){var a="";null!=n&&(a=r(n)+"/");var l=s.getPooled(e,a,i,o);g(t,u,l),s.release(l)}function c(t,e,n){if(null==t)return t;var r=[];return l(t,r,null,e,n),r}function f(t,e,n){return null}function p(t,e){return g(t,f,null)}function h(t){var e=[];return l(t,e,null,y.thatReturnsArgument),e}var d=n(5),v=n(8),y=n(11),g=n(14),m=d.twoArgumentPooler,b=d.fourArgumentPooler,P=/\/+/g;i.prototype.destructor=function(){this.func=null,this.context=null,this.count=0},d.addPoolingTo(i,m),s.prototype.destructor=function(){this.result=null,this.keyPrefix=null,this.func=null,this.context=null,this.count=0},d.addPoolingTo(s,b);var E={forEach:a,map:c,mapIntoWithKeyPrefixInternal:l,count:p,toArray:h};t.exports=E},function(t,e,n){"use strict";var r=n(6),i=(n(7),function(t){var e=this;if(e.instancePool.length){var n=e.instancePool.pop();return e.call(n,t),n}return new e(t)}),o=function(t,e){var n=this;if(n.instancePool.length){var r=n.instancePool.pop();return n.call(r,t,e),r}return new n(t,e)},a=function(t,e,n){var r=this;if(r.instancePool.length){var i=r.instancePool.pop();return r.call(i,t,e,n),i}return new r(t,e,n)},s=function(t,e,n,r){var i=this;if(i.instancePool.length){var o=i.instancePool.pop();return i.call(o,t,e,n,r),o}return new i(t,e,n,r)},u=function(t,e,n,r,i){var o=this;if(o.instancePool.length){var a=o.instancePool.pop();return o.call(a,t,e,n,r,i),a}return new o(t,e,n,r,i)},l=function(t){var e=this;t instanceof e?void 0:r("25"),t.destructor(),e.instancePool.length<e.poolSize&&e.instancePool.push(t)},c=10,f=i,p=function(t,e){var n=t;return n.instancePool=[],n.getPooled=e||f,n.poolSize||(n.poolSize=c),n.release=l,n},h={addPoolingTo:p,oneArgumentPooler:i,twoArgumentPooler:o,threeArgumentPooler:a,fourArgumentPooler:s,fiveArgumentPooler:u};t.exports=h},function(t,e){"use strict";function n(t){for(var e=arguments.length-1,n="Minified React error #"+t+"; visit http://facebook.github.io/react/docs/error-decoder.html?invariant="+t,r=0;r<e;r++)n+="&args[]="+encodeURIComponent(arguments[r+1]);n+=" for the full message or use the non-minified dev environment for full errors and additional helpful warnings.";var i=new Error(n);throw i.name="Invariant Violation",i.framesToPop=1,i}t.exports=n},function(t,e,n){"use strict";function r(t,e,n,r,i,o,a,s){if(!t){var u;if(void 0===e)u=new Error("Minified exception occurred; use the non-minified dev environment for the full error message and additional helpful warnings.");else{var l=[n,r,i,o,a,s],c=0;u=new Error(e.replace(/%s/g,function(){return l[c++]})),u.name="Invariant Violation"}throw u.framesToPop=1,u}}t.exports=r},function(t,e,n){"use strict";function r(t){return void 0!==t.ref}function i(t){return void 0!==t.key}var o=n(3),a=n(9),s=(n(10),n(12),Object.prototype.hasOwnProperty),u=n(13),l={key:!0,ref:!0,__self:!0,__source:!0},c=function(t,e,n,r,i,o,a){var s={$$typeof:u,type:t,key:e,ref:n,props:a,_owner:o};return s};c.createElement=function(t,e,n){var o,u={},f=null,p=null,h=null,d=null;if(null!=e){r(e)&&(p=e.ref),i(e)&&(f=""+e.key),h=void 0===e.__self?null:e.__self,d=void 0===e.__source?null:e.__source;for(o in e)s.call(e,o)&&!l.hasOwnProperty(o)&&(u[o]=e[o])}var v=arguments.length-2;if(1===v)u.children=n;else if(v>1){for(var y=Array(v),g=0;g<v;g++)y[g]=arguments[g+2];u.children=y}if(t&&t.defaultProps){var m=t.defaultProps;for(o in m)void 0===u[o]&&(u[o]=m[o])}return c(t,f,p,h,d,a.current,u)},c.createFactory=function(t){var e=c.createElement.bind(null,t);return e.type=t,e},c.cloneAndReplaceKey=function(t,e){var n=c(t.type,e,t.ref,t._self,t._source,t._owner,t.props);return n},c.cloneElement=function(t,e,n){var u,f=o({},t.props),p=t.key,h=t.ref,d=t._self,v=t._source,y=t._owner;if(null!=e){r(e)&&(h=e.ref,y=a.current),i(e)&&(p=""+e.key);var g;t.type&&t.type.defaultProps&&(g=t.type.defaultProps);for(u in e)s.call(e,u)&&!l.hasOwnProperty(u)&&(void 0===e[u]&&void 0!==g?f[u]=g[u]:f[u]=e[u])}var m=arguments.length-2;if(1===m)f.children=n;else if(m>1){for(var b=Array(m),P=0;P<m;P++)b[P]=arguments[P+2];f.children=b}return c(t.type,p,h,d,v,y,f)},c.isValidElement=function(t){return"object"==typeof t&&null!==t&&t.$$typeof===u},t.exports=c},function(t,e){"use strict";var n={current:null};t.exports=n},function(t,e,n){"use strict";var r=n(11),i=r;t.exports=i},function(t,e){"use strict";function n(t){return function(){return t}}var r=function(){};r.thatReturns=n,r.thatReturnsFalse=n(!1),r.thatReturnsTrue=n(!0),r.thatReturnsNull=n(null),r.thatReturnsThis=function(){return this},r.thatReturnsArgument=function(t){return t},t.exports=r},function(t,e,n){"use strict";var r=!1;t.exports=r},function(t,e){"use strict";var n="function"==typeof Symbol&&Symbol.for&&Symbol.for("react.element")||60103;t.exports=n},function(t,e,n){"use strict";function r(t,e){return t&&"object"==typeof t&&null!=t.key?l.escape(t.key):e.toString(36)}function i(t,e,n,o){var p=typeof t;if("undefined"!==p&&"boolean"!==p||(t=null),null===t||"string"===p||"number"===p||"object"===p&&t.$$typeof===s)return n(o,t,""===e?c+r(t,0):e),1;var h,d,v=0,y=""===e?c:e+f;if(Array.isArray(t))for(var g=0;g<t.length;g++)h=t[g],d=y+r(h,g),v+=i(h,d,n,o);else{var m=u(t);if(m){var b,P=m.call(t);if(m!==t.entries)for(var E=0;!(b=P.next()).done;)h=b.value,d=y+r(h,E++),v+=i(h,d,n,o);else for(;!(b=P.next()).done;){var w=b.value;w&&(h=w[1],d=y+l.escape(w[0])+f+r(h,0),v+=i(h,d,n,o))}}else if("object"===p){var k="",x=String(t);a("31","[object Object]"===x?"object with keys {"+Object.keys(t).join(", ")+"}":x,k)}}return v}function o(t,e,n){return null==t?0:i(t,"",e,n)}var a=n(6),s=(n(9),n(13)),u=n(15),l=(n(7),n(16)),c=(n(10),"."),f=":";t.exports=o},function(t,e){"use strict";function n(t){var e=t&&(r&&t[r]||t[i]);if("function"==typeof e)return e}var r="function"==typeof Symbol&&Symbol.iterator,i="@@iterator";t.exports=n},function(t,e){"use strict";function n(t){var e=/[=:]/g,n={"=":"=0",":":"=2"},r=(""+t).replace(e,function(t){return n[t]});return"$"+r}function r(t){var e=/(=0|=2)/g,n={"=0":"=","=2":":"},r="."===t[0]&&"$"===t[1]?t.substring(2):t.substring(1);return(""+r).replace(e,function(t){return n[t]})}var i={escape:n,unescape:r};t.exports=i},function(t,e,n){"use strict";function r(t,e,n){this.props=t,this.context=e,this.refs=a,this.updater=n||o}var i=n(6),o=n(18),a=(n(12),n(19));n(7),n(10);r.prototype.isReactComponent={},r.prototype.setState=function(t,e){"object"!=typeof t&&"function"!=typeof t&&null!=t?i("85"):void 0,this.updater.enqueueSetState(this,t),e&&this.updater.enqueueCallback(this,e,"setState")},r.prototype.forceUpdate=function(t){this.updater.enqueueForceUpdate(this),t&&this.updater.enqueueCallback(this,t,"forceUpdate")};t.exports=r},function(t,e,n){"use strict";function r(t,e){}var i=(n(10),{isMounted:function(t){return!1},enqueueCallback:function(t,e){},enqueueForceUpdate:function(t){r(t,"forceUpdate")},enqueueReplaceState:function(t,e){r(t,"replaceState")},enqueueSetState:function(t,e){r(t,"setState")}});t.exports=i},function(t,e,n){"use strict";var r={};t.exports=r},function(t,e,n){"use strict";function r(t,e,n){this.props=t,this.context=e,this.refs=u,this.updater=n||s}function i(){}var o=n(3),a=n(17),s=n(18),u=n(19);i.prototype=a.prototype,r.prototype=new i,r.prototype.constructor=r,o(r.prototype,a.prototype),r.prototype.isPureReactComponent=!0,t.exports=r},function(t,e,n){"use strict";function r(t){return t}function i(t,e){var n=P.hasOwnProperty(e)?P[e]:null;w.hasOwnProperty(e)&&("OVERRIDE_BASE"!==n?p("73",e):void 0),t&&("DEFINE_MANY"!==n&&"DEFINE_MANY_MERGED"!==n?p("74",e):void 0)}function o(t,e){if(e){"function"==typeof e?p("75"):void 0,v.isValidElement(e)?p("76"):void 0;var n=t.prototype,r=n.__reactAutoBindPairs;e.hasOwnProperty(m)&&E.mixins(t,e.mixins);for(var o in e)if(e.hasOwnProperty(o)&&o!==m){var a=e[o],s=n.hasOwnProperty(o);if(i(s,o),E.hasOwnProperty(o))E[o](t,a);else{var c=P.hasOwnProperty(o),f="function"==typeof a,h=f&&!c&&!s&&e.autobind!==!1;if(h)r.push(o,a),n[o]=a;else if(s){var d=P[o];!c||"DEFINE_MANY_MERGED"!==d&&"DEFINE_MANY"!==d?p("77",d,o):void 0,"DEFINE_MANY_MERGED"===d?n[o]=u(n[o],a):"DEFINE_MANY"===d&&(n[o]=l(n[o],a))}else n[o]=a}}}else;}function a(t,e){if(e)for(var n in e){var r=e[n];if(e.hasOwnProperty(n)){var i=n in E;i?p("78",n):void 0;var o=n in t;o?p("79",n):void 0,t[n]=r}}}function s(t,e){t&&e&&"object"==typeof t&&"object"==typeof e?void 0:p("80");for(var n in e)e.hasOwnProperty(n)&&(void 0!==t[n]?p("81",n):void 0,t[n]=e[n]);return t}function u(t,e){return function(){var n=t.apply(this,arguments),r=e.apply(this,arguments);if(null==n)return r;if(null==r)return n;var i={};return s(i,n),s(i,r),i}}function l(t,e){return function(){t.apply(this,arguments),e.apply(this,arguments)}}function c(t,e){var n=e.bind(t);return n}function f(t){for(var e=t.__reactAutoBindPairs,n=0;n<e.length;n+=2){var r=e[n],i=e[n+1];t[r]=c(t,i)}}var p=n(6),h=n(3),d=n(17),v=n(8),y=(n(22),n(18)),g=n(19),m=(n(7),n(10),"mixins"),b=[],P={mixins:"DEFINE_MANY",statics:"DEFINE_MANY",propTypes:"DEFINE_MANY",contextTypes:"DEFINE_MANY",childContextTypes:"DEFINE_MANY",getDefaultProps:"DEFINE_MANY_MERGED",getInitialState:"DEFINE_MANY_MERGED",getChildContext:"DEFINE_MANY_MERGED",render:"DEFINE_ONCE",componentWillMount:"DEFINE_MANY",componentDidMount:"DEFINE_MANY",componentWillReceiveProps:"DEFINE_MANY",shouldComponentUpdate:"DEFINE_ONCE",componentWillUpdate:"DEFINE_MANY",componentDidUpdate:"DEFINE_MANY",componentWillUnmount:"DEFINE_MANY",updateComponent:"OVERRIDE_BASE"},E={displayName:function(t,e){t.displayName=e},mixins:function(t,e){if(e)for(var n=0;n<e.length;n++)o(t,e[n])},childContextTypes:function(t,e){t.childContextTypes=h({},t.childContextTypes,e)},contextTypes:function(t,e){t.contextTypes=h({},t.contextTypes,e)},getDefaultProps:function(t,e){t.getDefaultProps?t.getDefaultProps=u(t.getDefaultProps,e):t.getDefaultProps=e},propTypes:function(t,e){t.propTypes=h({},t.propTypes,e)},statics:function(t,e){a(t,e)},autobind:function(){}},w={replaceState:function(t,e){this.updater.enqueueReplaceState(this,t),e&&this.updater.enqueueCallback(this,e,"replaceState")},isMounted:function(){return this.updater.isMounted(this)}},k=function(){};h(k.prototype,d.prototype,w);var x={createClass:function(t){var e=r(function(t,n,r){this.__reactAutoBindPairs.length&&f(this),this.props=t,this.context=n,this.refs=g,this.updater=r||y,this.state=null;var i=this.getInitialState?this.getInitialState():null;"object"!=typeof i||Array.isArray(i)?p("82",e.displayName||"ReactCompositeComponent"):void 0,this.state=i});e.prototype=new k,e.prototype.constructor=e,e.prototype.__reactAutoBindPairs=[],b.forEach(o.bind(null,e)),o(e,t),e.getDefaultProps&&(e.defaultProps=e.getDefaultProps()),e.prototype.render?void 0:p("83");for(var n in P)e.prototype[n]||(e.prototype[n]=null);return e},injection:{injectMixin:function(t){b.push(t)}}};t.exports=x},function(t,e,n){"use strict";var r={};t.exports=r},function(t,e,n){"use strict";var r=n(8),i=r.createFactory,o={a:i("a"),abbr:i("abbr"),address:i("address"),area:i("area"),article:i("article"),aside:i("aside"),audio:i("audio"),b:i("b"),base:i("base"),bdi:i("bdi"),bdo:i("bdo"),big:i("big"),blockquote:i("blockquote"),body:i("body"),br:i("br"),button:i("button"),canvas:i("canvas"),caption:i("caption"),cite:i("cite"),code:i("code"),col:i("col"),colgroup:i("colgroup"),data:i("data"),datalist:i("datalist"),dd:i("dd"),del:i("del"),details:i("details"),dfn:i("dfn"),dialog:i("dialog"),div:i("div"),dl:i("dl"),dt:i("dt"),em:i("em"),embed:i("embed"),fieldset:i("fieldset"),figcaption:i("figcaption"),figure:i("figure"),footer:i("footer"),form:i("form"),h1:i("h1"),h2:i("h2"),h3:i("h3"),h4:i("h4"),h5:i("h5"),h6:i("h6"),head:i("head"),header:i("header"),hgroup:i("hgroup"),hr:i("hr"),html:i("html"),i:i("i"),iframe:i("iframe"),img:i("img"),input:i("input"),ins:i("ins"),kbd:i("kbd"),keygen:i("keygen"),label:i("label"),legend:i("legend"),li:i("li"),link:i("link"),main:i("main"),map:i("map"),mark:i("mark"),menu:i("menu"),menuitem:i("menuitem"),meta:i("meta"),meter:i("meter"),nav:i("nav"),noscript:i("noscript"),object:i("object"),ol:i("ol"),optgroup:i("optgroup"),option:i("option"),output:i("output"),p:i("p"),param:i("param"),picture:i("picture"),pre:i("pre"),progress:i("progress"),q:i("q"),rp:i("rp"),rt:i("rt"),ruby:i("ruby"),s:i("s"),samp:i("samp"),script:i("script"),section:i("section"),select:i("select"),small:i("small"),source:i("source"),span:i("span"),strong:i("strong"),style:i("style"),sub:i("sub"),summary:i("summary"),sup:i("sup"),table:i("table"),tbody:i("tbody"),td:i("td"),textarea:i("textarea"),tfoot:i("tfoot"),th:i("th"),thead:i("thead"),time:i("time"),title:i("title"),tr:i("tr"),track:i("track"),u:i("u"),ul:i("ul"),var:i("var"),video:i("video"),wbr:i("wbr"),circle:i("circle"),clipPath:i("clipPath"),defs:i("defs"),ellipse:i("ellipse"),g:i("g"),image:i("image"),line:i("line"),linearGradient:i("linearGradient"),mask:i("mask"),path:i("path"),pattern:i("pattern"),polygon:i("polygon"),polyline:i("polyline"),radialGradient:i("radialGradient"),rect:i("rect"),stop:i("stop"),svg:i("svg"),text:i("text"),tspan:i("tspan")};t.exports=o},function(t,e,n){"use strict";function r(t,e){return t===e?0!==t||1/t===1/e:t!==t&&e!==e}function i(t){this.message=t,this.stack=""}function o(t){function e(e,n,r,o,a,s,u){o=o||S,s=s||r;if(null==n[r]){var l=w[a];return e?new i(null===n[r]?"The "+l+" `"+s+"` is marked as required "+("in `"+o+"`, but its value is `null`."):"The "+l+" `"+s+"` is marked as required in "+("`"+o+"`, but its value is `undefined`.")):null}return t(n,r,o,a,s)}var n=e.bind(null,!1);return n.isRequired=e.bind(null,!0),n}function a(t){function e(e,n,r,o,a,s){var u=e[n],l=m(u);if(l!==t){var c=w[o],f=b(u);return new i("Invalid "+c+" `"+a+"` of type "+("`"+f+"` supplied to `"+r+"`, expected ")+("`"+t+"`."))}return null}return o(e)}function s(){return o(x.thatReturns(null))}function u(t){function e(e,n,r,o,a){if("function"!=typeof t)return new i("Property `"+a+"` of component `"+r+"` has invalid PropType notation inside arrayOf.");var s=e[n];if(!Array.isArray(s)){var u=w[o],l=m(s);return new i("Invalid "+u+" `"+a+"` of type "+("`"+l+"` supplied to `"+r+"`, expected an array."))}for(var c=0;c<s.length;c++){var f=t(s,c,r,o,a+"["+c+"]",k);if(f instanceof Error)return f}return null}return o(e)}function l(){function t(t,e,n,r,o){var a=t[e];if(!E.isValidElement(a)){var s=w[r],u=m(a);return new i("Invalid "+s+" `"+o+"` of type "+("`"+u+"` supplied to `"+n+"`, expected a single ReactElement."))}return null}return o(t)}function c(t){function e(e,n,r,o,a){if(!(e[n]instanceof t)){var s=w[o],u=t.name||S,l=P(e[n]);return new i("Invalid "+s+" `"+a+"` of type "+("`"+l+"` supplied to `"+r+"`, expected ")+("instance of `"+u+"`."))}return null}return o(e)}function f(t){function e(e,n,o,a,s){for(var u=e[n],l=0;l<t.length;l++)if(r(u,t[l]))return null;var c=w[a],f=JSON.stringify(t);return new i("Invalid "+c+" `"+s+"` of value `"+u+"` "+("supplied to `"+o+"`, expected one of "+f+"."))}return Array.isArray(t)?o(e):x.thatReturnsNull}function p(t){function e(e,n,r,o,a){if("function"!=typeof t)return new i("Property `"+a+"` of component `"+r+"` has invalid PropType notation inside objectOf.");var s=e[n],u=m(s);if("object"!==u){var l=w[o];return new i("Invalid "+l+" `"+a+"` of type "+("`"+u+"` supplied to `"+r+"`, expected an object."))}for(var c in s)if(s.hasOwnProperty(c)){var f=t(s,c,r,o,a+"."+c,k);if(f instanceof Error)return f}return null}return o(e)}function h(t){function e(e,n,r,o,a){for(var s=0;s<t.length;s++){var u=t[s];if(null==u(e,n,r,o,a,k))return null}var l=w[o];return new i("Invalid "+l+" `"+a+"` supplied to "+("`"+r+"`."))}return Array.isArray(t)?o(e):x.thatReturnsNull}function d(){function t(t,e,n,r,o){if(!y(t[e])){var a=w[r];return new i("Invalid "+a+" `"+o+"` supplied to "+("`"+n+"`, expected a ReactNode."))}return null}return o(t)}function v(t){function e(e,n,r,o,a){var s=e[n],u=m(s);if("object"!==u){var l=w[o];return new i("Invalid "+l+" `"+a+"` of type `"+u+"` "+("supplied to `"+r+"`, expected `object`."))}for(var c in t){var f=t[c];if(f){var p=f(s,c,r,o,a+"."+c,k);if(p)return p}}return null}return o(e)}function y(t){switch(typeof t){case"number":case"string":case"undefined":return!0;case"boolean":return!t;case"object":if(Array.isArray(t))return t.every(y);if(null===t||E.isValidElement(t))return!0;var e=C(t);if(!e)return!1;var n,r=e.call(t);if(e!==t.entries){for(;!(n=r.next()).done;)if(!y(n.value))return!1}else for(;!(n=r.next()).done;){var i=n.value;if(i&&!y(i[1]))return!1}return!0;default:return!1}}function g(t,e){return"symbol"===t||("Symbol"===e["@@toStringTag"]||"function"==typeof Symbol&&e instanceof Symbol)}function m(t){var e=typeof t;return Array.isArray(t)?"array":t instanceof RegExp?"object":g(e,t)?"symbol":e}function b(t){var e=m(t);if("object"===e){if(t instanceof Date)return"date";if(t instanceof RegExp)return"regexp"}return e}function P(t){return t.constructor&&t.constructor.name?t.constructor.name:S}var E=n(8),w=n(22),k=n(25),x=n(11),C=n(15),S=(n(10),"<<anonymous>>"),A={array:a("array"),bool:a("boolean"),func:a("function"),number:a("number"),object:a("object"),string:a("string"),symbol:a("symbol"),any:s(),arrayOf:u,element:l(),instanceOf:c,node:d(),
-objectOf:p,oneOf:f,oneOfType:h,shape:v};i.prototype=Error.prototype,t.exports=A},function(t,e){"use strict";var n="SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED";t.exports=n},function(t,e){"use strict";t.exports="15.4.1"},function(t,e,n){"use strict";function r(t){return o.isValidElement(t)?void 0:i("143"),t}var i=n(6),o=n(8);n(7);t.exports=r}]);
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("react"));
+	else if(typeof define === 'function' && define.amd)
+		define(["react"], factory);
+	else {
+		var a = typeof exports === 'object' ? factory(require("react")) : factory(root["react"]);
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(this, function(__WEBPACK_EXTERNAL_MODULE_1__) {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/dist/";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * React masking component.
+	 */
+	var Mask = function (_React$Component) {
+	  _inherits(Mask, _React$Component);
+
+	  /**
+	   * Constructor for Masking component. Sets all values needed for the rest of
+	   * the component and binds all needed actions.
+	   * @param {object} props - See defaultProps and propTypes.
+	   */
+	  function Mask(props) {
+	    _classCallCheck(this, Mask);
+
+	    var _this = _possibleConstructorReturn(this, (Mask.__proto__ || Object.getPrototypeOf(Mask)).call(this, props));
+
+	    var child = _this.child = _react2.default.Children.only(_this.props.children);
+	    var value = _this.props.value || child.props.value;
+
+	    _this.hasValue = !!_this.props.value;
+
+	    var maskObj = _this.parseMask(_this.props.mask);
+	    _this.mask = maskObj.mask;
+	    _this.permanents = maskObj.permanents;
+	    _this.lastEditablePos = maskObj.lastEditablePos;
+
+	    // Set mask character or load default from props.
+	    _this.maskCharacter = _this.props.maskCharacter;
+
+	    if (_this.mask && (_this.props.alwaysShowMask || value)) {
+	      value = _this.formatValue(value);
+	    }
+
+	    _this.state = { child: child, value: value };
+
+	    // All Events. This ensures all actions on the input field are logical to
+	    // the browser AND user.
+	    _this.onPaste = _this.onPaste.bind(_this);
+	    _this.onBlur = _this.onBlur.bind(_this);
+	    _this.onChange = _this.onChange.bind(_this);
+	    _this.onChange = _this.onChange.bind(_this);
+	    _this.onFocus = _this.onFocus.bind(_this);
+	    _this.onKeyDown = _this.onKeyDown.bind(_this);
+	    _this.onKeyPress = _this.onKeyPress.bind(_this);
+	    _this.onKeyUp = _this.onKeyUp.bind(_this);
+	    _this.onCopy = _this.onCopy.bind(_this);
+	    return _this;
+	  }
+
+	  /**
+	   * Replace substr of value on a given position with a new substr.
+	   * @param {string} value - initial value
+	   * @param {string} newSubstr - substring that should replace part of the
+	   *  value
+	   * @param {number} position - position of substring
+	   * @returns {string} replaced substring
+	   */
+
+
+	  _createClass(Mask, [{
+	    key: 'setInputValue',
+
+
+	    /**
+	     * Set's the inputs field value and the main value.
+	     * @param {string} value - input value.
+	     * @return {undefined}
+	     */
+	    value: function setInputValue(value) {
+	      var input = this.input;
+	      input.value = value;
+	    }
+
+	    /**
+	     * Sets the caret to the end position of the editable area.
+	     * @return {undefined}
+	     */
+
+	  }, {
+	    key: 'setCaretToEnd',
+	    value: function setCaretToEnd() {
+	      var filledLength = this.getFilledLength();
+	      var position = this.getRightEditablePosition(filledLength);
+
+	      if (position !== null) {
+	        this.setCaretPosition(position);
+	      }
+	    }
+
+	    /**
+	     * Sets the caret to the position given bij the param.
+	     * @param {number} position - Position of the caret.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'setCaretPosition',
+	    value: function setCaretPosition(position) {
+	      var raf = Mask.requestAnimationFrame();
+	      var setPosition = this.setSelection.bind(this, position, 0);
+	      setPosition();
+	      raf(setPosition);
+	    }
+
+	    /**
+	     * Get's the current caret position.
+	     * @returns {number} Position of caret.
+	     */
+
+	  }, {
+	    key: 'getCaretPosition',
+	    value: function getCaretPosition() {
+	      return this.getSelection().start;
+	    }
+
+	    /**
+	     * Set seleciton based on start and length. Often used for setting the caret
+	     * to the right position.
+	     * @param {number} start - Start of selection
+	     * @param {number} len - length of selection, can be 0.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'setSelection',
+	    value: function setSelection(start) {
+	      var len = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+	      var input = this.input;
+	      var end = start + len;
+	      var range = 0;
+	      if ('selectionStart' in input && 'selectionEnd' in input) {
+	        input.selectionStart = start;
+	        input.selectionEnd = end;
+	      } else {
+	        range = input.createTextRange();
+	        range.collapse(true);
+	        range.moveStart('character', start);
+	        range.moveEnd('character', end - start);
+	        range.select();
+	      }
+	    }
+
+	    /**
+	     * Get selection based on dom node. Used document when selection is not
+	     * in the input node.
+	     * @returns {{start: number, end: number, length: number}} Object with start,
+	     *  end and length of selection.
+	     */
+
+	  }, {
+	    key: 'getSelection',
+	    value: function getSelection() {
+	      var input = this.input;
+	      var start = 0;
+	      var end = 0;
+	      if ('selectionStart' in input && 'selectionEnd' in input) {
+	        start = input.selectionStart;
+	        end = input.selectionEnd;
+	      } else {
+	        var range = document.selection.createRange();
+	        if (range.parentElement() === input) {
+	          start = -range.moveStart('character', -input.value.length);
+	          end = -range.moveEnd('character', -input.value.length);
+	        }
+	      }
+
+	      var length = end - start;
+
+	      return { start: start, end: end, length: length };
+	    }
+
+	    /**
+	     * Get the prefix from the mask. Useful for on focus character position.
+	     * @returns {string} Prefix string
+	     */
+
+	  }, {
+	    key: 'getPrefix',
+	    value: function getPrefix() {
+	      var mask = this.mask;
+
+	      var prefix = '';
+	      for (var i = 0; i < mask.length && this.isPermanentChar(i); ++i) {
+	        prefix += mask[i];
+	      }
+	      return prefix;
+	    }
+
+	    /**
+	     * Gets the next editable position based on current position.
+	     * @param {number} position - Current position
+	     * @returns {number|null} Returns editable position or null.
+	     */
+
+	  }, {
+	    key: 'getEditablePosition',
+	    value: function getEditablePosition(position) {
+	      var mask = this.mask;
+
+	      var i = position;
+
+	      for (; i < mask.length; i++) {
+	        if (!this.isPermanentChar(i)) {
+	          return i;
+	        }
+	      }
+	      return null;
+	    }
+
+	    /**
+	     * Gets the left editable position based on current position.
+	     * @param {number} position - Current position
+	     * @returns {number|null} Returns editable position or null.
+	     */
+
+	  }, {
+	    key: 'getLeftEditablePosition',
+	    value: function getLeftEditablePosition(position) {
+	      var i = position;
+	      for (; i >= 0; --i) {
+	        if (!this.isPermanentChar(i)) {
+	          return i;
+	        }
+	      }
+	      return null;
+	    }
+
+	    /**
+	     * Gets the right editable position based on current position.
+	     * @param {number} position - Current position
+	     * @returns {number|null} Returns editable position or null.
+	     */
+
+	  }, {
+	    key: 'getRightEditablePosition',
+	    value: function getRightEditablePosition(position) {
+	      var mask = this.mask;
+
+	      var i = position;
+	      for (; i < mask.length; ++i) {
+	        if (!this.isPermanentChar(i)) {
+	          return i;
+	        }
+	      }
+	      return null;
+	    }
+
+	    /**
+	     * Calculates filled length based on value.
+	     * @param {string} value - Value to be used to calculate filled length.
+	     * @returns {number} Filled length of input
+	     */
+
+	  }, {
+	    key: 'getFilledLength',
+	    value: function getFilledLength() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.state.value;
+
+	      var character = void 0,
+	          i = void 0;
+	      var maskCharacter = this.maskCharacter;
+
+	      if (!maskCharacter) {
+	        return value.length;
+	      }
+
+	      for (i = value.length - 1; i >= 0; --i) {
+	        character = value[i];
+	        if (!this.isPermanentChar(i) && this.isAllowedChar(character, i)) {
+	          break;
+	        }
+	      }
+	      return ++i || this.getPrefix().length;
+	    }
+
+	    /**
+	     * Returns the length of the substring.
+	     * @param {string} substr - Substring
+	     * @param {number} position - Position of substring
+	     * @returns {number} substrLength - Length of substring
+	     */
+
+	  }, {
+	    key: 'getRawSubstrLength',
+	    value: function getRawSubstrLength(substr, position) {
+	      var character = void 0;
+	      var mask = this.mask;
+
+	      var i = position;
+	      var substrArray = substr.split('');
+	      for (; i < mask.length && substrArray.length;) {
+	        if (!this.isPermanentChar(i) || mask[i] === substrArray[0]) {
+	          character = substrArray.shift();
+	          if (this.isAllowedChar(character, i, true)) {
+	            ++i;
+	          }
+	        } else {
+	          ++i;
+	        }
+	      }
+	      return i - position;
+	    }
+
+	    /**
+	     * Dub function that is in progress. No value descriptor is made so it will
+	     * use the input given by an event.
+	     * @returns {string} value.
+	     */
+
+	  }, {
+	    key: 'getInputValue',
+	    value: function getInputValue() {
+	      var input = this.input;
+	      var valueDescriptor = this.valueDescriptor;
+
+
+	      var value = void 0;
+	      if (valueDescriptor) {
+	        value = valueDescriptor.get.call(input);
+	      } else {
+	        value = input.value;
+	      }
+
+	      return value;
+	    }
+
+	    /**
+	     * Component will mount function. Ensures initial value setting.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'componentWillMount',
+	    value: function componentWillMount() {
+	      var mask = this.mask;
+	      var value = this.state.value;
+
+	      if (mask && value) {
+	        this.setState({ value: value });
+	      }
+	    }
+
+	    /**
+	     * Component did mount function that checks what type of browser is used.
+	     * @return {undefined}
+	     */
+
+	  }, {
+	    key: 'componentDidMount',
+	    value: function componentDidMount() {
+	      this.isAndroidBrowser = Mask.isAndroidBrowser();
+	      this.isWindowsPhoneBrowser = Mask.isWindowsPhoneBrowser();
+	    }
+
+	    /**
+	     * On paste action
+	     * @param {object} event - Browser event.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onPaste',
+	    value: function onPaste(event) {
+	      if (this.isAndroidBrowser) {
+	        this.pasteSelection = this.getSelection();
+	        this.setInputValue('');
+	        return;
+	      }
+
+	      var text = void 0;
+
+	      if (window.clipboardData && window.clipboardData.getData) {
+	        // IE
+	        text = window.clipboardData.getData('Text');
+	      } else if (event.clipboardData && event.clipboardData.getData) {
+	        text = event.clipboardData.getData('text/plain');
+	      }
+
+	      if (text) {
+	        var value = this.state.value;
+	        var selection = this.getSelection();
+	        this.pasteText(value, text, selection, event);
+	      }
+	      event.preventDefault();
+	    }
+
+	    /**
+	     * On Copy event, this makes sure that NO masking characters will be copied.
+	     * @param {object} event - Browser event.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onCopy',
+	    value: function onCopy(event) {
+	      var value = this.getInputValue();
+	      value = value.substr(0, this.getFilledLength());
+	      event.clipboardData.setData('text/plain', value);
+	      event.preventDefault();
+	    }
+
+	    /**
+	     * Handles delete and backspace actions onKeyDown. Also triggers bound
+	     * actions on the Mask.
+	     * @param {object} event - Browser event.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onKeyDown',
+	    value: function onKeyDown(event) {
+	      this.input = event.target;
+	      var key = event.key;
+	      var value = event.target.value;
+	      var preventDefault = false;
+	      var caretPosition = this.getCaretPosition();
+
+	      switch (key) {
+	        case 'Backspace':
+	        case 'Delete':
+	          {
+	            var prefix = this.getPrefix();
+	            var deleteFromRight = key === 'Delete';
+	            var selectionRange = this.getSelection();
+
+	            if (selectionRange.length) {
+	              value = this.clearRange(value, selectionRange.start, selectionRange.length);
+	            } else if (caretPosition < prefix.length || !deleteFromRight && caretPosition === prefix.length) {
+	              caretPosition = prefix.length;
+	            } else {
+	              var editablePosition = deleteFromRight ? this.getRightEditablePosition(caretPosition) : this.getLeftEditablePosition(caretPosition - 1);
+	              if (editablePosition !== null) {
+	                value = this.clearRange(value, editablePosition, 1);
+	                caretPosition = editablePosition;
+	              }
+	            }
+	            break;
+	          }
+	        default:
+	          {
+	            break;
+	          }
+	      }
+
+	      if (value !== this.state.value) {
+	        this.setInputValue(value);
+	        this.setState({ value: this.hasValue ? this.state.value : value });
+	        preventDefault = true;
+	      }
+
+	      if (preventDefault) {
+	        event.preventDefault();
+	        this.setCaretPosition(caretPosition);
+	      }
+	    }
+
+	    /**
+	     * On Key Press event. Makes sure that the correct state is sent on the value
+	     * and sets the caret position.
+	     * @param {object} event - Browser event
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onKeyPress',
+	    value: function onKeyPress(event) {
+	      var key = event.key;
+	      this.input = event.target;
+
+	      if (key === 'Enter' || event.ctrlKey || event.metaKey) {
+	        return;
+	      }
+
+	      // When browser is windows phone browser return, keypress cannot be
+	      // hijacked.
+	      if (this.isWindowsPhoneBrowser) {
+	        return;
+	      }
+
+	      var caretPosition = this.getCaretPosition();
+
+	      var value = this.state.value;
+	      var mask = this.mask,
+	          lastEditablePos = this.lastEditablePos;
+
+	      var prefix = this.getPrefix();
+	      var selection = this.getSelection();
+
+	      if (this.isPermanentChar(caretPosition) && mask[caretPosition] === key) {
+	        value = this.insertRawSubstr(value, key, caretPosition);
+	        ++caretPosition;
+	      } else {
+	        var editablePosition = this.getRightEditablePosition(caretPosition);
+
+	        if (editablePosition !== null && this.isAllowedChar(key, editablePosition)) {
+	          value = this.clearRange(value, selection.start, selection.length);
+	          value = this.insertRawSubstr(value, key, editablePosition);
+	          caretPosition = editablePosition + 1;
+	        }
+	      }
+
+	      if (value !== this.state.value) {
+	        this.setInputValue(value);
+	        this.setState({
+	          value: this.hasValue ? this.state.value : value
+	        });
+	      }
+
+	      event.preventDefault();
+
+	      if (caretPosition < lastEditablePos && caretPosition > prefix.length) {
+	        caretPosition = this.getRightEditablePosition(caretPosition);
+	      }
+	      this.setCaretPosition(caretPosition);
+	    }
+
+	    /**
+	     * On Key Up event. Enforces state setting of value.
+	     * @param {object} event - Browser event
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onKeyUp',
+	    value: function onKeyUp(event) {
+	      this.setState({ value: event.target.value });
+	    }
+
+	    /**
+	     * On Blur event for the input field. Makes sure the correct state has been
+	     * set.
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onBlur',
+	    value: function onBlur() {
+	      if (!this.props.alwaysShowMask && this.isEmpty()) {
+	        var inputValue = '';
+	        var isInputValueChanged = inputValue !== this.getInputValue();
+	        if (isInputValueChanged) {
+	          this.setInputValue(inputValue);
+	        }
+
+	        this.setState({
+	          value: this.hasValue ? this.state.value : ''
+	        });
+	      }
+	    }
+	  }, {
+	    key: 'getClearedValue',
+	    value: function getClearedValue(value, substr, startPosition, endPosition, caretPosition) {
+	      var clearedValue = this.clearRange(value, startPosition, endPosition);
+	      return this.insertRawSubstr(clearedValue, substr, caretPosition);
+	    }
+	  }, {
+	    key: 'formatEnteredSubstr',
+	    value: function formatEnteredSubstr(inputValue, oldValue) {
+	      var lastEditablePos = this.lastEditablePos,
+	          mask = this.mask;
+
+	      var substrLength = inputValue.length - oldValue.length;
+	      var selection = this.getSelection();
+	      var startPosition = selection.end - substrLength;
+	      var endPosition = mask.length - startPosition;
+	      var enteredSubstr = inputValue.substr(startPosition, substrLength);
+	      var prefix = this.getPrefix();
+	      var caretPosition = selection.end;
+	      var clearedValue = void 0;
+
+	      if (startPosition < lastEditablePos && (substrLength !== 1 || enteredSubstr !== mask[startPosition])) {
+	        caretPosition = this.getRightEditablePosition(startPosition);
+	      } else {
+	        caretPosition = startPosition;
+	      }
+
+	      inputValue = inputValue.substr(0, startPosition) + inputValue.substr(startPosition + substrLength);
+
+	      if (substrLength !== 1 || caretPosition >= prefix.length && caretPosition < lastEditablePos) {
+	        clearedValue = this.getClearedValue(inputValue, enteredSubstr, startPosition, endPosition, caretPosition);
+	        caretPosition = this.getFilledLength(clearedValue);
+	      } else if (caretPosition < lastEditablePos) {
+	        caretPosition++;
+	      }
+	      return { inputValue: inputValue, caretPosition: caretPosition };
+	    }
+	  }, {
+	    key: 'formatRemovedSubstr',
+	    value: function formatRemovedSubstr(inputValue, oldValue) {
+	      var mask = this.mask,
+	          maskCharacter = this.maskCharacter;
+
+	      var selection = this.getSelection();
+	      var prefix = this.getPrefix();
+	      var removedLength = mask.length - inputValue.length;
+	      var substr = inputValue.substr(0, selection.end);
+	      var clearOnly = substr === oldValue.substr(0, selection.end);
+	      var clearedValue = this.clearRange(oldValue, selection.end, removedLength);
+	      var caretPosition = selection.end;
+
+	      if (maskCharacter) {
+	        inputValue = this.insertRawSubstr(clearedValue, substr, 0);
+	      }
+
+	      if (!clearOnly) {
+	        clearedValue = this.getClearedValue(clearedValue, substr, selection.end, mask.length - selection.end, 0);
+	        caretPosition = this.getFilledLength(clearedValue);
+	      } else if (caretPosition < prefix.length) {
+	        caretPosition = prefix.length;
+	      }
+	      return { inputValue: inputValue, caretPosition: caretPosition };
+	    }
+
+	    /**
+	     * On Change event. This is the main event listener that makes sure all
+	     * masking changes will be set correctly.
+	     * @param {object} event - Browser event
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onChange',
+	    value: function onChange(event) {
+	      // Set input on change event. This ensures we have the right scope.
+	      this.input = event.target;
+	      var pasteSelection = this.pasteSelection;
+
+	      var oldValue = this.state.value;
+	      var inputValue = this.input.value;
+
+	      // Ensure that when text has been pasted, the rest of the onChange function
+	      // does not trigger.
+	      if (pasteSelection) {
+	        this.pasteSelection = null;
+	        this.pasteText(oldValue, inputValue, pasteSelection, event);
+	        return;
+	      }
+	      var formattedStr = void 0,
+	          caretPosition = void 0;
+
+	      if (inputValue.length > oldValue.length) {
+	        formattedStr = this.formatEnteredSubstr(inputValue, oldValue);
+	      } else if (inputValue.length < oldValue.length) {
+	        formattedStr = this.formatRemovedSubstr(inputValue, oldValue);
+	      }
+	      inputValue = formattedStr.inputValue;
+	      caretPosition = formattedStr.caretPosition;
+
+	      inputValue = this.formatValue(inputValue);
+
+	      this.setState({
+	        value: this.hasValue ? this.state.value : inputValue
+	      });
+
+	      this.setCaretPosition(caretPosition);
+	    }
+
+	    /**
+	     * On focus sets the caret to the correct position.
+	     * @param {object} event - Browser event
+	     * @returns {undefined}
+	     */
+
+	  }, {
+	    key: 'onFocus',
+	    value: function onFocus(event) {
+	      this.input = event.target;
+	      if (!this.state.value) {
+	        var prefix = this.getPrefix();
+	        var value = this.formatValue(prefix);
+	        var inputValue = this.formatValue(value);
+
+	        this.setState({
+	          value: this.hasValue ? this.state.value : inputValue
+	        }, this.setCaretToEnd);
+	      } else if (this.getFilledLength() < this.mask.length) {
+	        this.setCaretToEnd();
+	      }
+	    }
+
+	    /**
+	     * Test if character entered is allowed on the given position.
+	     * @param {string} character - Character to check
+	     * @param {number} position - Position of the character.
+	     * @param {boolean} allowMaskChar - Flag to check if mask char is allowed.
+	     * @returns {boolean} true or false based on if it is allowed.
+	     */
+
+	  }, {
+	    key: 'isAllowedChar',
+	    value: function isAllowedChar(character, position) {
+	      var allowMaskChar = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+	      var mask = this.mask,
+	          maskCharacter = this.maskCharacter;
+
+	      var ruleCharacter = mask[position];
+	      var characterRule = this.props.formatCharacters[ruleCharacter];
+
+	      if (this.isPermanentChar(position)) {
+	        return ruleCharacter === character;
+	      }
+
+	      return new RegExp(characterRule).test(character) || allowMaskChar && character === maskCharacter;
+	    }
+
+	    /**
+	     * Return if the given position is a permanent character. Used to generate
+	     * a prefix.
+	     * @param {number} position - given position.
+	     * @returns {boolean} true or false if character is permanent.
+	     */
+
+	  }, {
+	    key: 'isPermanentChar',
+	    value: function isPermanentChar(position) {
+	      return this.permanents.indexOf(position) !== -1;
+	    }
+
+	    /**
+	     * Check whether the input field is completely filled.
+	     * @param {string} value - Value to check if input is filled.
+	     * @returns {boolean} true or false if input is filled.
+	     */
+
+	  }, {
+	    key: 'isFilled',
+	    value: function isFilled() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.state.value;
+
+	      return this.getFilledLength(value) === this.mask.length;
+	    }
+
+	    /**
+	     * Check if the input value is empty. This checks if given characters are
+	     * permanent or given by user input.
+	     * @param {string} value - input value
+	     * @returns {boolean} true or false if field is empty.
+	     */
+
+	  }, {
+	    key: 'isEmpty',
+	    value: function isEmpty() {
+	      var _this2 = this;
+
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.state.value;
+
+	      return !value.split('').some(function (character, i) {
+	        return !_this2.isPermanentChar(i) && _this2.isAllowedChar(character, i);
+	      });
+	    }
+
+	    /**
+	     * Clears a given range at a given start position and length in the value.
+	     * @param {string} value - value to clear
+	     * @param {number} start - start value where to clear
+	     * @param {number} length - length of value to clear.
+	     * @returns {string} new value.
+	     */
+
+	  }, {
+	    key: 'clearRange',
+	    value: function clearRange(value, start, length) {
+	      var _this3 = this;
+
+	      var end = start + length;
+	      var maskCharacter = this.maskCharacter,
+	          mask = this.mask;
+
+
+	      if (!maskCharacter) {
+	        var _ret = function () {
+	          var prefix = _this3.getPrefix();
+
+	          value = value.split('').filter(function (_, i) {
+	            return i < prefix.length || i < start || i >= end;
+	          }).join('');
+	          return {
+	            v: _this3.formatValue(value)
+	          };
+	        }();
+
+	        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	      }
+	      return value.split('').map(function (c, i) {
+	        if (i < start || i >= end) {
+	          return c;
+	        }
+	        if (_this3.isPermanentChar(i)) {
+	          return mask[i];
+	        }
+	        return maskCharacter;
+	      }).join('');
+	    }
+
+	    /**
+	     * Formats the value based on the mask.
+	     * @param {string} value - value to format.
+	     * @returns {string} formatted value.
+	     */
+
+	  }, {
+	    key: 'formatValue',
+	    value: function formatValue() {
+	      var _this4 = this;
+
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      var maskCharacter = this.maskCharacter,
+	          mask = this.mask;
+
+
+	      if (!maskCharacter) {
+	        var prefix = this.getPrefix();
+
+	        value = this.insertRawSubstr('', value, 0);
+
+	        var valueEnd = value.length - 1;
+
+	        while (value.length > prefix.length && this.isPermanentChar(valueEnd)) {
+	          value = value.slice(0, valueEnd);
+	          valueEnd = value.length - 1;
+	        }
+
+	        if (value.length < prefix.length) {
+	          value = prefix;
+	        }
+	        return value;
+	      }
+
+	      if (value) {
+	        var emptyValue = this.formatValue();
+	        return this.insertRawSubstr(emptyValue, value, 0);
+	      }
+
+	      return value.split('').concat(new Array(mask.length - value.length).fill(null)).map(function (character, position) {
+	        if (_this4.isAllowedChar(character, position)) {
+	          return character;
+	        } else if (_this4.isPermanentChar(position)) {
+	          return mask[position];
+	        }
+	        return maskCharacter;
+	      }).join('');
+	    }
+
+	    /**
+	     * Insert raw substring in the value and return the new value.
+	     * Checks whether the cursor position does not compromise permanent
+	     * characters.
+	     * @param {string} value - value to be inserted into.
+	     * @param {string} substr - Substring to insert into value.
+	     * @param {number} position - Position to insert to.
+	     * @return {string} newly formatted value with inserted substring
+	     */
+
+	  }, {
+	    key: 'insertRawSubstr',
+	    value: function insertRawSubstr(value, substr, position) {
+	      var mask = this.mask,
+	          maskCharacter = this.maskCharacter;
+
+	      var isFilled = this.isFilled(value);
+	      var prefix = this.getPrefix();
+	      substr = substr.split('');
+
+	      if (!maskCharacter && position > value.length) {
+	        value += mask.slice(value.length, position);
+	      }
+
+	      for (var i = position; i < mask.length && substr.length;) {
+	        var isPermanent = this.isPermanentChar(i);
+	        if (!isPermanent || mask[i] === substr[0]) {
+	          var character = substr.shift();
+	          if (this.isAllowedChar(character, i, true)) {
+	            if (i < value.length) {
+	              if (maskCharacter || isFilled || i < prefix.length) {
+	                value = Mask.replaceSubstr(value, character, i);
+	              } else {
+	                value = this.formatValue(value.substr(0, i) + character + value.substr(i));
+	              }
+	            } else if (!maskCharacter) {
+	              value += character;
+	            }
+	            ++i;
+	          }
+	        } else {
+	          if (!maskCharacter && i >= value.length) {
+	            value += mask[i];
+	          } else if (maskCharacter && isPermanent && substr[0] === maskCharacter) {
+	            substr.shift();
+	          }
+	          ++i;
+	        }
+	      }
+	      return value;
+	    }
+
+	    /**
+	     * Parse the rawMask and return an object containing the mask and all
+	     * permanent positions.
+	     * @param {string} rawMask - user given mask to be converted.
+	     * @returns {{mask: string, permanents: Array, lastEditablePos: integer}}
+	     *  returns object with mask, permanents and last editable position.
+	     */
+
+	  }, {
+	    key: 'parseMask',
+	    value: function parseMask(rawMask) {
+	      var _this5 = this;
+
+	      var permanents = []; // Keeps track of permanent position.
+	      var isPermanent = false;
+	      var mask = '';
+	      var lastEditablePos = null;
+
+	      // Split mask on each character and define which is a permanent char.
+	      rawMask.split('').forEach(function (c) {
+	        isPermanent = !isPermanent && c === '\\';
+
+	        if (isPermanent || !_this5.props.formatCharacters.hasOwnProperty(c)) {
+	          permanents.push(mask.length);
+	        } else {
+	          lastEditablePos = mask.length + 1;
+	        }
+	        mask += c;
+	      });
+	      return { mask: mask, permanents: permanents, lastEditablePos: lastEditablePos };
+	    }
+	  }, {
+	    key: 'pasteText',
+	    value: function pasteText(value, text, selection, event) {
+	      var caretPosition = selection.start;
+	      if (selection.length) {
+	        value = this.clearRange(value, caretPosition, selection.length);
+	      }
+	      var textLen = this.getRawSubstrLength(text, caretPosition);
+	      value = this.insertRawSubstr(value, text, caretPosition);
+	      caretPosition += textLen;
+	      caretPosition = this.getRightEditablePosition(caretPosition) || caretPosition;
+	      if (value !== this.getInputValue()) {
+	        if (event) {
+	          this.setInputValue(value);
+	        }
+	        this.setState({
+	          value: this.hasValue ? this.state.value : value
+	        });
+	        if (event && typeof this.props.onChange === 'function') {
+	          this.props.onChange(event);
+	        }
+	      }
+	      this.setCaretPosition(caretPosition);
+	    }
+	  }, {
+	    key: 'render',
+	    value: function render() {
+	      var _this6 = this;
+
+	      var value = this.child.props.value;
+	      var handlerKeys = ['onFocus', 'onBlur', 'onChange', 'onKeyDown', 'onKeyPress', 'onKeyUp', 'onPaste', 'onCopy'];
+	      var props = { value: value };
+	      handlerKeys.forEach(function (k) {
+	        props[k] = _this6[k];
+	      });
+	      if (props.value !== null && props.value !== undefined) {
+	        props.value = this.state.value;
+	      }
+	      props.onKeyUp = this.onKeyUp;
+	      this.child = _react2.default.cloneElement(this.child, props);
+
+	      return _react2.default.createElement(
+	        'div',
+	        { className: 'masked' },
+	        this.child
+	      );
+	    }
+	  }], [{
+	    key: 'replaceSubstr',
+	    value: function replaceSubstr(value, newSubstr, position) {
+	      return value.slice(0, position) + newSubstr + value.slice(position + newSubstr.length);
+	    }
+
+	    /**
+	     * Check whether the browser is an android browser.
+	     * @param {boolean} isFirefox - switch if is firefox browser on android.
+	     * @returns {boolean} true or false if android.
+	     */
+
+	  }, {
+	    key: 'isAndroidBrowser',
+	    value: function isAndroidBrowser() {
+	      var isFirefox = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+	      var windows = new RegExp('windows', 'i');
+	      var firefox = new RegExp('firefox', 'i');
+	      var android = new RegExp('android', 'i');
+	      var ua = navigator.userAgent;
+	      return !windows.test(ua) && isFirefox === firefox.test(ua) && android.test(ua);
+	    }
+
+	    /**
+	     * Check whether the browser is an windows phone browser.
+	     * @returns {boolean} true or false if windows phone.
+	     */
+
+	  }, {
+	    key: 'isWindowsPhoneBrowser',
+	    value: function isWindowsPhoneBrowser() {
+	      var windows = new RegExp('windows', 'i');
+	      var phone = new RegExp('phone', 'i');
+	      var ua = navigator.userAgent;
+	      return windows.test(ua) && phone.test(ua);
+	    }
+
+	    /**
+	     * Returns a function to be able to ask the browser for an animation frame.
+	     * Useful for setting the cursor.
+	     * @returns {Function} animation frame function.
+	     */
+
+	  }, {
+	    key: 'requestAnimationFrame',
+	    value: function requestAnimationFrame() {
+	      return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function (fn) {
+	        return setTimeout(fn, 0);
+	      };
+	    }
+	  }]);
+
+	  return Mask;
+	}(_react2.default.Component);
+
+	/**
+	 * Set default prop types.
+	 */
+
+
+	exports.default = Mask;
+	Mask.propTypes = {
+	  children: _react2.default.PropTypes.object,
+	  mask: _react2.default.PropTypes.string,
+	  maskCharacter: _react2.default.PropTypes.string,
+	  formatCharacters: _react2.default.PropTypes.object,
+	  alwaysShowMask: _react2.default.PropTypes.bool,
+	  i18n: _react2.default.PropTypes.string,
+	  value: _react2.default.PropTypes.string,
+	  onChange: _react2.default.PropTypes.func
+	};
+
+	/**
+	 * Default props for the component.
+	 */
+	Mask.defaultProps = {
+	  maskCharacter: '_',
+	  formatCharacters: {
+	    '9': '[0-9]',
+	    'a': '^[A-Za-z]$',
+	    'A': '^[A-Z]$',
+	    '*': '[A-Za-z0-9]'
+	  },
+	  alwaysShowMask: true
+	};
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
+
+/***/ }
+/******/ ])
+});
+;
