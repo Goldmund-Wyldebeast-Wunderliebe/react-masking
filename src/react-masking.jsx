@@ -399,6 +399,7 @@ class Mask extends React.Component {
         } else if (caretPosition < prefix.length
           || (!deleteFromRight && caretPosition === prefix.length)) {
           caretPosition = prefix.length;
+          preventDefault = true;
         } else {
           const editablePosition = deleteFromRight ?
             this.getRightEditablePosition(caretPosition) :
@@ -419,6 +420,11 @@ class Mask extends React.Component {
       this.setInputValue(value);
       this.setState({value: this.hasValue ? this.state.value : value});
       preventDefault = true;
+
+      if (this.child.type.name !== 'input') {
+        const event = new Event('input', { bubbles: true });
+        this.input.dispatchEvent(event);
+      }
     }
 
     if (preventDefault) {
@@ -435,11 +441,15 @@ class Mask extends React.Component {
    * @returns {undefined}
    */
   onKeyPress(event) {
+    event.persist();
     const key = event.key;
     this.input = event.target;
 
     if (key === 'Enter' || event.ctrlKey || event.metaKey) {
       return;
+    } else if (this.child.type.name !== 'input') {
+      const event = new Event('input', { bubbles: true });
+      this.input.dispatchEvent(event);
     }
 
     // When browser is windows phone browser return, keypress cannot be
@@ -473,6 +483,9 @@ class Mask extends React.Component {
       this.setState({
         value: this.hasValue ? this.state.value : value
       });
+      if (typeof this.props.onChange === 'function') {
+        this.props.onChange(event);
+      }
     }
 
     event.preventDefault();
@@ -601,10 +614,10 @@ class Mask extends React.Component {
     }
     let formattedStr, caretPosition;
 
-    if (inputValue.length > oldValue.length) {
-      formattedStr = this.formatEnteredSubstr(inputValue, oldValue);
-    } else if (inputValue.length < oldValue.length) {
+    if (inputValue.length < oldValue.length) {
       formattedStr = this.formatRemovedSubstr(inputValue, oldValue);
+    } else {
+      formattedStr = this.formatEnteredSubstr(inputValue, oldValue);
     }
     inputValue = formattedStr.inputValue;
     caretPosition = formattedStr.caretPosition;

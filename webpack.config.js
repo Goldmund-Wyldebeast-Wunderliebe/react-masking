@@ -10,6 +10,7 @@ module.exports = {
   entry: [
     `webpack-dev-server/client?http://${HOST}:${PORT}`,
     `webpack/hot/only-dev-server`,
+    `react-validation/lib/src/validation.jsx`,
     `./examples/index.jsx` // Your appʼs entry point
   ],
   devtool: process.env.WEBPACK_DEVTOOL || 'cheap-module-source-map',
@@ -31,7 +32,11 @@ module.exports = {
       {
         test: /.jsx?$/,
         loader: 'babel-loader',
-        exclude: /node_modules/
+        include: [
+          path.resolve(__dirname, "src"),
+          path.resolve(__dirname, "examples"),
+          path.resolve(__dirname, "node_modules/react-validation"),
+        ]
       },
       {
         test: /\.json$/,

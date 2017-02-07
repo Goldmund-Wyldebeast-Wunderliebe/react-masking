@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Validation from 'react-validation';
+import Validation from 'react-validation/lib/src/validation';
 import validator from 'validator';
 import Mask from '../src/react-masking.jsx';
 
@@ -54,6 +54,18 @@ Object.assign(Validation.rules, {
 /* eslint-enable react/display-name */
 
 class App extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+    this.state = {onChangeValue: ''};
+  }
+
+  onChange(event) {
+    const onChangeValue = event.target.value;
+    this.setState({onChangeValue});
+
+  }
   render() {
     return (
       <div>
@@ -83,10 +95,12 @@ class App extends React.Component {
           <section>
             <h3>Simple form</h3>
             <Validation.components.Form ref={form => this.form = form}>
-              <Mask mask="+31999">
+              <Mask mask="+31999" onChange={this.onChange}>
                 <Validation.components.Input validations={['required']}
-                                             name="input" value=""/>
+                                             name="input" value=""
+                onChange={this.onChange}/>
               </Mask>
+              <span>{this.state.onChangeValue}</span>
               <Mask mask="9999 AA">
                 <Validation.components.Input validations={['required']}
                                              name="zip" value=""/>
