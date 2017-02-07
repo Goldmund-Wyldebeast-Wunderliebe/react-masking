@@ -882,7 +882,6 @@ class Mask extends React.Component {
     if (props.value !== null && props.value !== undefined) {
       props.value = this.state.value;
     }
-    props.onKeyUp = this.onKeyUp;
     this.child = React.cloneElement(this.child, props);
 
     return (
