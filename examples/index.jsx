@@ -95,7 +95,7 @@ class App extends React.Component {
           <section>
             <h3>Simple form</h3>
             <Validation.components.Form ref={form => this.form = form}>
-              <Mask mask="+31999" onChange={this.onChange}>
+              <Mask mask="+31999" onChange={this.onChange} alwaysShowMask={false} maskCharacter=" ">
                 <Validation.components.Input validations={['required']}
                                              name="input" value=""
                 onChange={this.onChange}/>
@@ -104,6 +104,18 @@ class App extends React.Component {
               <Mask mask="9999 AA">
                 <Validation.components.Input validations={['required']}
                                              name="zip" value=""/>
+              </Mask>
+
+              <Mask mask='99-99-9999' maskCharacter=" "
+                    onChange={this.onChange}
+                    alwaysShowMask={false}>
+                <Validation.components.Input
+                  placeholder='Birth date'
+                  name="date_of_birth"
+                  value={''}
+                  onChange={this.onChange}
+                  validations={['required']}
+                />
               </Mask>
             </Validation.components.Form>
           </section>
